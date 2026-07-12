@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-title" content="電卓">
     <title>電卓</title>
     
- <!-- iPhoneホーム画面用のアイコン設定 -->
+    <!-- iPhoneホーム画面用のアイコン設定（同フォルダのicon.pngを読み込み） -->
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="apple-touch-icon-precomposed" href="icon.png">
-    
+
     <style>
         /* 全体のリセットと拡大・選択の禁止（アプリ化のための必須処理） */
         * {
@@ -69,7 +69,7 @@
         /* マジシャンモードの隠しMマーク */
         #magic-indicator {
             font-size: 12px;
-            color: #333; /* 目立たない薄いグレー。完全に隠したい場合は #000 に */
+            color: #333; /* 目立たない薄いグレー */
             font-weight: bold;
             visibility: hidden;
         }
@@ -139,26 +139,22 @@
             font-size: 36px;
         }
 
-        /* 0ボタンのみ横長にする調整 */
+        /* 0ボタン */
         .btn.zero {
-            grid-column: span 1; /* 通常の丸を維持（画像1枚目のデザインに準拠） */
+            grid-column: span 1;
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <!-- 左上のメニューアイコンを模したもの -->
         <div class="header-btn">☰</div>
-        <!-- 右上の隠しマジシャンモードインジケーター（薄いM） -->
         <div id="magic-indicator">M</div>
     </div>
 
     <div class="calculator">
         <div class="display">
-            <!-- 計算プロセス表示用 -->
             <div class="formula" id="formula"></div>
-            <!-- メイン数字表示用 -->
             <div class="result" id="result">0</div>
         </div>
         
@@ -167,7 +163,6 @@
             <div class="btn function" onclick="handleKey('backspace')">⌫</div>
             <div class="btn function" onclick="handleKey('AC')">AC</div>
             <div class="btn function" onclick="handleKey('%')">%</div>
-            <!-- ÷ボタンに長押しイベントを付与 -->
             <div class="btn operator" id="divide-btn" 
                  typeof="button"
                  ontouchstart="startPress(event)" 
@@ -203,15 +198,15 @@
 
     <script>
         // 状態管理用変数
-        let currentInput = "0";      // 現在入力中の値
-        let memoryFormula = "";      // 計算式履歴
-        let activeOperator = null;   // 選択中の演算子
-        let previousValue = null;    // 一つ前の値
-        let isResetOnNextKey = false;// 次の入力でリセットするか
+        let currentInput = "0";      
+        let memoryFormula = "";      
+        let activeOperator = null;   
+        let previousValue = null;    
+        let isResetOnNextKey = false;
 
         // マジック用変数
-        let isMagicMode = false;     // 現在マジシャンモードか
-        let magicNumber = null;      // 仕込まれたマジックナンバー（nullなら通常電卓）
+        let isMagicMode = false;     
+        let magicNumber = null;      
 
         // 長押しタイマー用
         let pressTimer = null;
@@ -238,7 +233,6 @@
             const resEl = document.getElementById("result");
             const formEl = document.getElementById("formula");
             
-            // カンマ区切り整形（マジシャンモード時も一見普通の入力に見せる）
             let formatted = currentInput;
             if (!isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
@@ -249,7 +243,6 @@
             resEl.innerText = formatted;
             formEl.innerText = memoryFormula;
 
-            // 文字数に応じたフォントサイズ自動調整
             if (formatted.length > 10) {
                 resEl.style.fontSize = "40px";
             } else if (formatted.length > 7) {
@@ -266,13 +259,12 @@
             pressTimer = setTimeout(() => {
                 toggleMagicMode();
                 isLongPressActioned = true;
-            }, 2000); // 2000ms = 2秒
+            }, 2000);
         }
 
         function endPress(e) {
             clearTimeout(pressTimer);
             if (!isLongPressActioned) {
-                // 長押しに達していなければ、通常の「÷」入力として処理
                 handleKey('÷');
             }
         }
@@ -280,11 +272,8 @@
         // モードの切り替え処理
         function toggleMagicMode() {
             if (!isMagicMode) {
-                // 通常モード -> マジシャンモードへの移行
                 isMagicMode = true;
                 document.getElementById("magic-indicator").style.visibility = "visible";
-                
-                // すでに設定されているマジックナンバーがあればそれを表示、なければ空に
                 if (magicNumber !== null) {
                     currentInput = magicNumber;
                 } else {
@@ -292,39 +281,30 @@
                 }
                 memoryFormula = "";
             } else {
-                // マジシャンモード -> 通常モードへの移行
                 isMagicMode = false;
                 document.getElementById("magic-indicator").style.visibility = "hidden";
-                
-                // 入力されていた数字をマジックナンバーとして登録
                 if (currentInput === "0" || currentInput === "") {
-                    magicNumber = null; // 何もない、または0の場合は通常の電卓化
+                    magicNumber = null;
                 } else {
                     magicNumber = currentInput;
                 }
-                
-                // 画面をリセット
                 currentInput = "0";
                 memoryFormula = "";
             }
             updateDisplay();
-            // 触覚フィードバックの代わり（iPhoneで成功したことがわかるよう一瞬バイブ。ホーム画面追加時のみ有効な場合あり）
             if (navigator.vibrate) navigator.vibrate(50);
         }
 
         // キー入力メインルーティン
         function handleKey(key) {
-            // マジシャンモード中の操作
             if (isMagicMode) {
                 handleMagicInput(key);
                 return;
             }
-
-            // 通常モード（マジック発動待機、または完全通常電卓）の操作
             handleNormalInput(key);
         }
 
-        // 【マジシャンモード時】の数字セット処理
+        // マジシャンモード中の操作
         function handleMagicInput(key) {
             if (!isNaN(key) || key === '.') {
                 if (currentInput === "0" && key !== '.') {
@@ -349,10 +329,9 @@
             updateDisplay();
         }
 
-        // 【通常モード時】の計算・トリック処理
+        // 通常モード時の計算・トリック処理
         function handleNormalInput(key) {
             if (!isNaN(key)) {
-                // 数字が入力されたとき
                 if (currentInput === "0" || isResetOnNextKey) {
                     currentInput = key;
                     isResetOnNextKey = false;
@@ -388,32 +367,34 @@
             } else if (key === '%') {
                 currentInput = String(parseFloat(currentInput) / 100);
             } else if (['+', '－', '×', '÷'].includes(key)) {
-                // 演算子が押されたとき
                 previousValue = currentInput;
                 activeOperator = key;
                 memoryFormula = previousValue + " " + key;
                 isResetOnNextKey = true;
             } else if (key === '=') {
-                // ＝が押されたとき（ここでマジックを発動させる）
                 if (activeOperator && previousValue !== null) {
                     memoryFormula = memoryFormula + " " + currentInput;
                     
-                    if (magicNumber !== null) {
-                        // 【仕掛け】マジックナンバーが設定されていれば、どんな計算であってもその数にする
+                    // まず本来の正しい計算結果を算出する
+                    let realResult = 0;
+                    const v1 = parseFloat(previousValue);
+                    const v2 = parseFloat(currentInput);
+                    switch(activeOperator) {
+                        case '+': realResult = v1 + v2; break;
+                        case '－': realResult = v1 - v2; break;
+                        case '×': realResult = v1 * v2; break;
+                        case '÷': realResult = v2 !== 0 ? v1 / v2 : "Error"; break;
+                    }
+
+                    // 【300以下の判定ロジック】
+                    if (magicNumber !== null && (realResult === "Error" || realResult > 300)) {
+                        // マジックナンバーが設定されていて、かつ正しい答えが300を超える（またはエラーの）場合はすり替える
                         currentInput = magicNumber;
                     } else {
-                        // マジックナンバーが空なら、完全に本物の電卓として計算する
-                        let res = 0;
-                        const v1 = parseFloat(previousValue);
-                        const v2 = parseFloat(currentInput);
-                        switch(activeOperator) {
-                            case '+': res = v1 + v2; break;
-                            case '－': res = v1 - v2; break;
-                            case '×': res = v1 * v2; break;
-                            case '÷': res = v2 !== 0 ? v1 / v2 : "Error"; break;
-                        }
-                        currentInput = String(res);
+                        // マジックナンバー未設定、または正しい答えが300以下の場合は、本物の電卓として正しい結果を出す
+                        currentInput = String(realResult);
                     }
+
                     activeOperator = null;
                     previousValue = null;
                     isResetOnNextKey = true;
