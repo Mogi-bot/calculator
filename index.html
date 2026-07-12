@@ -1,187 +1,428 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
+    <meta charset="UTF-8">
+    <!-- 画面の拡大縮小を禁止し、ホーム画面でアプリ風に起動するための設定 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="電卓">
+    <title>電卓</title>
+    
+    <!-- iPhoneホーム画面用のアイコン設定 (画像2枚目のデザインを模したプレースホルダー。必要に応じてご自身の画像URLに差し替えも可能です) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='180' height='180'><rect width='100' height='100' rx='22' fill='%23ccc'/><rect x='22' y='18' width='56' height='64' rx='10' fill='%23222'/><rect x='30' y='24' width='40' height='12' rx='2' fill='%23666'/><circle cx='36' cy='44' r='4' fill='%23fff'/><circle cx='50' cy='44' r='4' fill='%23fff'/><circle cx='64' cy='44' r='4' fill='%23f90'/><circle cx='36' cy='56' r='4' fill='%23fff'/><circle cx='50' cy='56' r='4' fill='%23fff'/><circle cx='64' cy='56' r='4' fill='%23f90'/><circle cx='36' cy='68' r='4' fill='%23fff'/><circle cx='50' cy='68' r='4' fill='%23fff'/><circle cx='64' cy='68' r='4' fill='%23f90'/></svg>">
 
-<meta charset="UTF-8">
+    <style>
+        /* 全体のリセットと拡大・選択の禁止（アプリ化のための必須処理） */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            position: fixed;
+        }
 
-<meta
-name="viewport"
-content="width=device-width,
-initial-scale=1,
-maximum-scale=1,
-minimum-scale=1,
-user-scalable=no,
-viewport-fit=cover">
+        /* 電卓全体のコンテナ */
+        .calculator {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            width: 100%;
+            height: 100%;
+            padding: 20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;
+        }
 
-<title>Calculator</title>
+        /* 上部ヘッダー（アイコン用スペース） */
+        .header {
+            position: absolute;
+            top: calc(10px + env(safe-area-inset-top));
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 44px;
+            z-index: 10;
+        }
+        .header-btn {
+            width: 38px;
+            height: 38px;
+            background-color: #1c1c1e;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 18px;
+        }
+        /* マジシャンモードの隠しMマーク */
+        #magic-indicator {
+            font-size: 12px;
+            color: #333; /* 目立たない薄いグレー。完全に隠したい場合は #000 に */
+            font-weight: bold;
+            visibility: hidden;
+        }
 
-<meta
-name="theme-color"
-content="#000000">
+        /* ディスプレイ部分 */
+        .display {
+            padding: 10px;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            flex-grow: 1;
+            margin-bottom: 15px;
+        }
+        .formula {
+            color: #888;
+            font-size: 24px;
+            min-height: 30px;
+            word-wrap: break-word;
+            word-break: break-all;
+            margin-bottom: 5px;
+        }
+        .result {
+            color: #fff;
+            font-size: 70px;
+            font-weight: 300;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: clip;
+        }
 
-<meta
-name="apple-mobile-web-app-capable"
-content="yes">
+        /* ボタンのグリッド構造 */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
 
-<meta
-name="apple-mobile-web-app-status-bar-style"
-content="black-translucent">
+        /* ボタンの共通スタイル */
+        .btn {
+            background-color: #333;
+            color: #fff;
+            border-radius: 50%;
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: opacity 0.1s;
+        }
+        .btn:active {
+            opacity: 0.6;
+        }
 
-<meta
-name="apple-mobile-web-app-title"
-content="Calculator">
+        /* 機能ボタン（最上段：バックスペース、AC、％） */
+        .btn.function {
+            background-color: #a5a5a5;
+            color: #000;
+            font-size: 26px;
+        }
+        /* 演算子ボタン（右列：÷, ×, －, ＋, ＝） */
+        .btn.operator {
+            background-color: #ff9f0a;
+            color: #fff;
+            font-size: 36px;
+        }
 
-<meta
-name="format-detection"
-content="telephone=no">
-
-<link
-rel="manifest"
-href="manifest.json">
-
-<link
-rel="apple-touch-icon"
-sizes="180x180"
-href="icon-180.png">
-
-<link
-rel="icon"
-sizes="192x192"
-href="icon-192.png">
-
-<link
-rel="stylesheet"
-href="style.css">
-
+        /* 0ボタンのみ横長にする調整 */
+        .btn.zero {
+            grid-column: span 1; /* 通常の丸を維持（画像1枚目のデザインに準拠） */
+        }
+    </style>
 </head>
-
 <body>
 
-<div id="calculator">
+    <div class="header">
+        <!-- 左上のメニューアイコンを模したもの -->
+        <div class="header-btn">☰</div>
+        <!-- 右上の隠しマジシャンモードインジケーター（薄いM） -->
+        <div id="magic-indicator">M</div>
+    </div>
 
-    <!--==========================
-            DISPLAY
-    ==========================-->
-
-    <div id="displayArea">
-
-        <div id="expression"></div>
-
-        <div id="displayRow">
-
-            <div id="modeIndicator"></div>
-
-            <div id="display">
-                0
-            </div>
-
+    <div class="calculator">
+        <div class="display">
+            <!-- 計算プロセス表示用 -->
+            <div class="formula" id="formula"></div>
+            <!-- メイン数字表示用 -->
+            <div class="result" id="result">0</div>
         </div>
+        
+        <div class="buttons">
+            <!-- 1段目 -->
+            <div class="btn function" onclick="handleKey('backspace')">⌫</div>
+            <div class="btn function" onclick="handleKey('AC')">AC</div>
+            <div class="btn function" onclick="handleKey('%')">%</div>
+            <!-- ÷ボタンに長押しイベントを付与 -->
+            <div class="btn operator" id="divide-btn" 
+                 typeof="button"
+                 ontouchstart="startPress(event)" 
+                 onmousedown="startPress(event)"
+                 ontouchend="endPress(event)" 
+                 onmouseup="endPress(event)">÷</div>
 
+            <!-- 2段目 -->
+            <div class="btn" onclick="handleKey('7')">7</div>
+            <div class="btn" onclick="handleKey('8')">8</div>
+            <div class="btn" onclick="handleKey('9')">9</div>
+            <div class="btn operator" onclick="handleKey('×')">×</div>
+
+            <!-- 3段目 -->
+            <div class="btn" onclick="handleKey('4')">4</div>
+            <div class="btn" onclick="handleKey('5')">5</div>
+            <div class="btn" onclick="handleKey('6')">6</div>
+            <div class="btn operator" onclick="handleKey('－')">－</div>
+
+            <!-- 4段目 -->
+            <div class="btn" onclick="handleKey('1')">1</div>
+            <div class="btn" onclick="handleKey('2')">2</div>
+            <div class="btn" onclick="handleKey('3')">3</div>
+            <div class="btn operator" onclick="handleKey('+')">+</div>
+
+            <!-- 5段目 -->
+            <div class="btn" onclick="handleKey('+/-')">+/-</div>
+            <div class="btn zero" onclick="handleKey('0')">0</div>
+            <div class="btn" onclick="handleKey('.')">.</div>
+            <div class="btn operator" onclick="handleKey('=')">=</div>
+        </div>
     </div>
 
-    <!--==========================
-            BUTTONS
-    ==========================-->
+    <script>
+        // 状態管理用変数
+        let currentInput = "0";      // 現在入力中の値
+        let memoryFormula = "";      // 計算式履歴
+        let activeOperator = null;   // 選択中の演算子
+        let previousValue = null;    // 一つ前の値
+        let isResetOnNextKey = false;// 次の入力でリセットするか
 
-    <div id="buttons">
+        // マジック用変数
+        let isMagicMode = false;     // 現在マジシャンモードか
+        let magicNumber = null;      // 仕込まれたマジックナンバー（nullなら通常電卓）
 
-        <button
-            class="btn function"
-            data-action="clear">
+        // 長押しタイマー用
+        let pressTimer = null;
+        let isLongPressActioned = false;
 
-            AC
+        // iOS用のダブルタップズーム防止
+        document.addEventListener('touchstart', function (event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+        
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
 
-        </button>
+        // ディスプレイ描画更新
+        function updateDisplay() {
+            const resEl = document.getElementById("result");
+            const formEl = document.getElementById("formula");
+            
+            // カンマ区切り整形（マジシャンモード時も一見普通の入力に見せる）
+            let formatted = currentInput;
+            if (!isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
+                const parts = currentInput.split('.');
+                parts[0] = Number(parts[0]).toLocaleString('en-US');
+                formatted = parts.join('.');
+            }
+            
+            resEl.innerText = formatted;
+            formEl.innerText = memoryFormula;
 
-        <button
-            class="btn function"
-            data-action="sign">
+            // 文字数に応じたフォントサイズ自動調整
+            if (formatted.length > 10) {
+                resEl.style.fontSize = "40px";
+            } else if (formatted.length > 7) {
+                resEl.style.fontSize = "55px";
+            } else {
+                resEl.style.fontSize = "70px";
+            }
+        }
 
-            ±
+        // ÷ボタン長押し検知 (2秒)
+        function startPress(e) {
+            e.preventDefault();
+            isLongPressActioned = false;
+            pressTimer = setTimeout(() => {
+                toggleMagicMode();
+                isLongPressActioned = true;
+            }, 2000); // 2000ms = 2秒
+        }
 
-        </button>
+        function endPress(e) {
+            clearTimeout(pressTimer);
+            if (!isLongPressActioned) {
+                // 長押しに達していなければ、通常の「÷」入力として処理
+                handleKey('÷');
+            }
+        }
 
-        <button
-            class="btn function"
-            data-action="percent">
+        // モードの切り替え処理
+        function toggleMagicMode() {
+            if (!isMagicMode) {
+                // 通常モード -> マジシャンモードへの移行
+                isMagicMode = true;
+                document.getElementById("magic-indicator").style.visibility = "visible";
+                
+                // すでに設定されているマジックナンバーがあればそれを表示、なければ空に
+                if (magicNumber !== null) {
+                    currentInput = magicNumber;
+                } else {
+                    currentInput = "0";
+                }
+                memoryFormula = "";
+            } else {
+                // マジシャンモード -> 通常モードへの移行
+                isMagicMode = false;
+                document.getElementById("magic-indicator").style.visibility = "hidden";
+                
+                // 入力されていた数字をマジックナンバーとして登録
+                if (currentInput === "0" || currentInput === "") {
+                    magicNumber = null; // 何もない、または0の場合は通常の電卓化
+                } else {
+                    magicNumber = currentInput;
+                }
+                
+                // 画面をリセット
+                currentInput = "0";
+                memoryFormula = "";
+            }
+            updateDisplay();
+            // 触覚フィードバックの代わり（iPhoneで成功したことがわかるよう一瞬バイブ。ホーム画面追加時のみ有効な場合あり）
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
 
-            %
+        // キー入力メインルーティン
+        function handleKey(key) {
+            // マジシャンモード中の操作
+            if (isMagicMode) {
+                handleMagicInput(key);
+                return;
+            }
 
-        </button>
+            // 通常モード（マジック発動待機、または完全通常電卓）の操作
+            handleNormalInput(key);
+        }
 
-        <button
-            id="divideButton"
-            class="btn operator">
+        // 【マジシャンモード時】の数字セット処理
+        function handleMagicInput(key) {
+            if (!isNaN(key) || key === '.') {
+                if (currentInput === "0" && key !== '.') {
+                    currentInput = key;
+                } else {
+                    if (key === '.' && currentInput.includes('.')) return;
+                    currentInput += key;
+                }
+            } else if (key === 'AC') {
+                currentInput = "0";
+            } else if (key === 'backspace') {
+                if (currentInput.length > 1) {
+                    currentInput = currentInput.slice(0, -1);
+                } else {
+                    currentInput = "0";
+                }
+            } else if (key === '+/-') {
+                if (currentInput !== "0") {
+                    currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
+                }
+            }
+            updateDisplay();
+        }
 
-            ÷
+        // 【通常モード時】の計算・トリック処理
+        function handleNormalInput(key) {
+            if (!isNaN(key)) {
+                // 数字が入力されたとき
+                if (currentInput === "0" || isResetOnNextKey) {
+                    currentInput = key;
+                    isResetOnNextKey = false;
+                } else {
+                    currentInput += key;
+                }
+            } else if (key === '.') {
+                if (isResetOnNextKey) {
+                    currentInput = "0.";
+                    isResetOnNextKey = false;
+                    updateDisplay();
+                    return;
+                }
+                if (!currentInput.includes('.')) {
+                    currentInput += '.';
+                }
+            } else if (key === 'AC') {
+                currentInput = "0";
+                memoryFormula = "";
+                previousValue = null;
+                activeOperator = null;
+                isResetOnNextKey = false;
+            } else if (key === 'backspace') {
+                if (currentInput.length > 1) {
+                    currentInput = currentInput.slice(0, -1);
+                } else {
+                    currentInput = "0";
+                }
+            } else if (key === '+/-') {
+                if (currentInput !== "0") {
+                    currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
+                }
+            } else if (key === '%') {
+                currentInput = String(parseFloat(currentInput) / 100);
+            } else if (['+', '－', '×', '÷'].includes(key)) {
+                // 演算子が押されたとき
+                previousValue = currentInput;
+                activeOperator = key;
+                memoryFormula = previousValue + " " + key;
+                isResetOnNextKey = true;
+            } else if (key === '=') {
+                // ＝が押されたとき（ここでマジックを発動させる）
+                if (activeOperator && previousValue !== null) {
+                    memoryFormula = memoryFormula + " " + currentInput;
+                    
+                    if (magicNumber !== null) {
+                        // 【仕掛け】マジックナンバーが設定されていれば、どんな計算であってもその数にする
+                        currentInput = magicNumber;
+                    } else {
+                        // マジックナンバーが空なら、完全に本物の電卓として計算する
+                        let res = 0;
+                        const v1 = parseFloat(previousValue);
+                        const v2 = parseFloat(currentInput);
+                        switch(activeOperator) {
+                            case '+': res = v1 + v2; break;
+                            case '－': res = v1 - v2; break;
+                            case '×': res = v1 * v2; break;
+                            case '÷': res = v2 !== 0 ? v1 / v2 : "Error"; break;
+                        }
+                        currentInput = String(res);
+                    }
+                    activeOperator = null;
+                    previousValue = null;
+                    isResetOnNextKey = true;
+                }
+            }
+            updateDisplay();
+        }
 
-        </button>
-
-        <button class="btn number">7</button>
-        <button class="btn number">8</button>
-        <button class="btn number">9</button>
-
-        <button
-            class="btn operator"
-            data-action="multiply">
-
-            ×
-
-        </button>
-
-        <button class="btn number">4</button>
-        <button class="btn number">5</button>
-        <button class="btn number">6</button>
-
-        <button
-            class="btn operator"
-            data-action="minus">
-
-            −
-
-        </button>
-
-        <button class="btn number">1</button>
-        <button class="btn number">2</button>
-        <button class="btn number">3</button>
-
-        <button
-            class="btn operator"
-            data-action="plus">
-
-            +
-
-        </button>
-
-        <button
-            class="btn number zero">
-
-            0
-
-        </button>
-
-        <button
-            class="btn number">
-
-            .
-
-        </button>
-
-        <button
-            id="equalsButton"
-            class="btn operator">
-
-            =
-
-        </button>
-
-    </div>
-
-</div>
-
-<script src="script.js"></script>
-
+        // 初期化
+        updateDisplay();
+    </script>
 </body>
-
 </html>
