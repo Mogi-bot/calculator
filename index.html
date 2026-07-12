@@ -1,115 +1,165 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport"
+
+<meta
+name="viewport"
 content="width=device-width,
 initial-scale=1,
+maximum-scale=1,
+minimum-scale=1,
+user-scalable=no,
 viewport-fit=cover">
 
 <title>Calculator</title>
 
-<link rel="manifest" href="manifest.json">
+<meta
+name="apple-mobile-web-app-capable"
+content="yes">
 
-<link rel="stylesheet" href="style.css">
+<meta
+name="apple-mobile-web-app-status-bar-style"
+content="black">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#000000">
+<meta
+name="theme-color"
+content="#000000">
+
+<link rel="manifest"
+href="manifest.json">
+
+<link
+rel="apple-touch-icon"
+href="icon-180.png">
+
+<link
+rel="stylesheet"
+href="style.css">
 
 </head>
 
 <body>
 
-<div class="calculator">
+<div id="calculator">
 
-    <div class="display-area">
+    <!--==============================
+            DISPLAY
+    ==============================-->
+
+    <div id="displayArea">
+
+        <div id="expression"></div>
 
         <div id="display">
+
             0
+
+        </div>
+
+        <div id="modeIndicator">
+
         </div>
 
     </div>
 
-    <div class="buttons">
+    <!--==============================
+            BUTTONS
+    ==============================-->
 
-        <button class="function" data-action="ac">AC</button>
-        <button class="function" data-action="sign">±</button>
-        <button class="function" data-action="percent">%</button>
-        <button class="operator secret-button"
-                data-action="divide">
+    <div id="buttons">
+
+        <button
+            class="function"
+            data-action="ac">
+
+            AC
+
+        </button>
+
+        <button
+            class="function"
+            data-action="sign">
+
+            ±
+
+        </button>
+
+        <button
+            class="function"
+            data-action="percent">
+
+            %
+
+        </button>
+
+        <button
+            class="operator secret-button"
+            data-action="divide">
+
             ÷
+
         </button>
 
         <button class="number">7</button>
         <button class="number">8</button>
         <button class="number">9</button>
-        <button class="operator" data-action="multiply">×</button>
+
+        <button
+            class="operator"
+            data-action="multiply">
+
+            ×
+
+        </button>
 
         <button class="number">4</button>
         <button class="number">5</button>
         <button class="number">6</button>
-        <button class="operator" data-action="minus">−</button>
+
+        <button
+            class="operator"
+            data-action="minus">
+
+            −
+
+        </button>
 
         <button class="number">1</button>
         <button class="number">2</button>
         <button class="number">3</button>
-        <button class="operator" data-action="plus">+</button>
 
-        <button class="number zero">0</button>
-        <button class="number">.</button>
-        <button class="operator"
-                data-action="equals">
-            =
+        <button
+            class="operator"
+            data-action="plus">
+
+            +
+
         </button>
 
-    </div>
+        <button
+            class="number zero">
 
-</div>
+            0
 
-<!-- 設定画面 -->
+        </button>
 
-<div id="settingOverlay">
+        <button
+            class="number">
 
-    <div id="settingWindow">
+            .
 
-        <h2>Magic Settings</h2>
+        </button>
 
-        <label>
+        <button
+            class="operator"
+            data-action="equals">
 
-            <input
-                type="checkbox"
-                id="magicEnabled">
+            =
 
-            Magic Mode
-
-        </label>
-
-        <br><br>
-
-        <label>
-
-            Result Number
-
-        </label>
-
-        <input
-            id="magicNumber"
-            type="text"
-            placeholder="123456">
-
-        <div class="settingButtons">
-
-            <button id="saveSetting">
-                Save
-            </button>
-
-            <button id="cancelSetting">
-                Cancel
-            </button>
-
-        </div>
+        </button>
 
     </div>
 
@@ -118,4 +168,5 @@ viewport-fit=cover">
 <script src="script.js"></script>
 
 </body>
+
 </html>
