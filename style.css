@@ -1,0 +1,342 @@
+/*==================================================
+    iPhone Calculator
+==================================================*/
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+}
+
+html{
+    height:100%;
+}
+
+body{
+
+    height:100%;
+
+    background:#000;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    overflow:hidden;
+
+    color:white;
+
+}
+
+
+/*======================================
+        Calculator
+======================================*/
+
+.calculator{
+
+    width:min(100vw,430px);
+
+    height:100vh;
+
+    background:#000;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:flex-end;
+
+    padding-bottom:env(safe-area-inset-bottom);
+
+}
+
+
+/*======================================
+        Display
+======================================*/
+
+.display-area{
+
+    flex:1;
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    align-items:flex-end;
+
+    padding:25px;
+
+}
+
+#display{
+
+    width:100%;
+
+    text-align:right;
+
+    color:white;
+
+    font-size:72px;
+
+    font-weight:300;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+}
+
+
+/*======================================
+        Buttons
+======================================*/
+
+.buttons{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:12px;
+
+    padding:18px;
+
+}
+
+
+/*======================================
+        Common Button
+======================================*/
+
+button{
+
+    height:82px;
+
+    border:none;
+
+    border-radius:50%;
+
+    font-size:34px;
+
+    cursor:pointer;
+
+    transition:
+        transform .08s,
+        filter .15s;
+
+    user-select:none;
+
+}
+
+button:active{
+
+    transform:scale(.94);
+
+}
+
+
+/*======================================
+        Number
+======================================*/
+
+.number{
+
+    background:#333333;
+
+    color:white;
+
+}
+
+.number:hover{
+
+    filter:brightness(1.2);
+
+}
+
+
+/*======================================
+        Function
+======================================*/
+
+.function{
+
+    background:#a5a5a5;
+
+    color:black;
+
+}
+
+.function:hover{
+
+    filter:brightness(1.08);
+
+}
+
+
+/*======================================
+        Operator
+======================================*/
+
+.operator{
+
+    background:#ff9f0a;
+
+    color:white;
+
+}
+
+.operator:hover{
+
+    filter:brightness(1.08);
+
+}
+
+
+/*======================================
+        Zero
+======================================*/
+
+.zero{
+
+    grid-column:span 2;
+
+    border-radius:45px;
+
+    text-align:left;
+
+    padding-left:34px;
+
+}
+
+
+/*======================================
+        Setting Overlay
+======================================*/
+
+#settingOverlay{
+
+    position:fixed;
+
+    inset:0;
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:rgba(0,0,0,.65);
+
+    backdrop-filter:blur(8px);
+
+}
+
+
+/*======================================
+        Setting Window
+======================================*/
+
+#settingWindow{
+
+    width:320px;
+
+    background:#1f1f1f;
+
+    border-radius:18px;
+
+    padding:28px;
+
+    color:white;
+
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+
+}
+
+#settingWindow h2{
+
+    text-align:center;
+
+    margin-bottom:22px;
+
+    font-weight:500;
+
+}
+
+#settingWindow label{
+
+    display:block;
+
+    margin-bottom:10px;
+
+    font-size:18px;
+
+}
+
+#magicNumber{
+
+    width:100%;
+
+    margin-top:10px;
+
+    margin-bottom:22px;
+
+    font-size:22px;
+
+    padding:10px;
+
+    border-radius:10px;
+
+    border:none;
+
+    background:#333;
+
+    color:white;
+
+}
+
+
+/*======================================
+        Setting Buttons
+======================================*/
+
+.settingButtons{
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+.settingButtons button{
+
+    flex:1;
+
+    height:50px;
+
+    border-radius:12px;
+
+    font-size:20px;
+
+}
+
+#saveSetting{
+
+    background:#0a84ff;
+
+    color:white;
+
+}
+
+#cancelSetting{
+
+    background:#555;
+
+    color:white;
+
+}
