@@ -17,23 +17,38 @@ viewport-fit=cover">
 <title>Calculator</title>
 
 <meta
+name="theme-color"
+content="#000000">
+
+<meta
 name="apple-mobile-web-app-capable"
 content="yes">
 
 <meta
 name="apple-mobile-web-app-status-bar-style"
-content="black">
+content="black-translucent">
 
 <meta
-name="theme-color"
-content="#000000">
+name="apple-mobile-web-app-title"
+content="Calculator">
 
-<link rel="manifest"
+<meta
+name="format-detection"
+content="telephone=no">
+
+<link
+rel="manifest"
 href="manifest.json">
 
 <link
 rel="apple-touch-icon"
+sizes="180x180"
 href="icon-180.png">
+
+<link
+rel="icon"
+sizes="192x192"
+href="icon-192.png">
 
 <link
 rel="stylesheet"
@@ -45,42 +60,42 @@ href="style.css">
 
 <div id="calculator">
 
-    <!--==============================
+    <!--==========================
             DISPLAY
-    ==============================-->
+    ==========================-->
 
     <div id="displayArea">
 
         <div id="expression"></div>
 
-        <div id="display">
+        <div id="displayRow">
 
-            0
+            <div id="modeIndicator"></div>
 
-        </div>
-
-        <div id="modeIndicator">
+            <div id="display">
+                0
+            </div>
 
         </div>
 
     </div>
 
-    <!--==============================
+    <!--==========================
             BUTTONS
-    ==============================-->
+    ==========================-->
 
     <div id="buttons">
 
         <button
-            class="function"
-            data-action="ac">
+            class="btn function"
+            data-action="clear">
 
             AC
 
         </button>
 
         <button
-            class="function"
+            class="btn function"
             data-action="sign">
 
             ±
@@ -88,7 +103,7 @@ href="style.css">
         </button>
 
         <button
-            class="function"
+            class="btn function"
             data-action="percent">
 
             %
@@ -96,43 +111,43 @@ href="style.css">
         </button>
 
         <button
-            class="operator secret-button"
-            data-action="divide">
+            id="divideButton"
+            class="btn operator">
 
             ÷
 
         </button>
 
-        <button class="number">7</button>
-        <button class="number">8</button>
-        <button class="number">9</button>
+        <button class="btn number">7</button>
+        <button class="btn number">8</button>
+        <button class="btn number">9</button>
 
         <button
-            class="operator"
+            class="btn operator"
             data-action="multiply">
 
             ×
 
         </button>
 
-        <button class="number">4</button>
-        <button class="number">5</button>
-        <button class="number">6</button>
+        <button class="btn number">4</button>
+        <button class="btn number">5</button>
+        <button class="btn number">6</button>
 
         <button
-            class="operator"
+            class="btn operator"
             data-action="minus">
 
             −
 
         </button>
 
-        <button class="number">1</button>
-        <button class="number">2</button>
-        <button class="number">3</button>
+        <button class="btn number">1</button>
+        <button class="btn number">2</button>
+        <button class="btn number">3</button>
 
         <button
-            class="operator"
+            class="btn operator"
             data-action="plus">
 
             +
@@ -140,22 +155,22 @@ href="style.css">
         </button>
 
         <button
-            class="number zero">
+            class="btn number zero">
 
             0
 
         </button>
 
         <button
-            class="number">
+            class="btn number">
 
             .
 
         </button>
 
         <button
-            class="operator"
-            data-action="equals">
+            id="equalsButton"
+            class="btn operator">
 
             =
 
