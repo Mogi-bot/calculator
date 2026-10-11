@@ -14,13 +14,14 @@
     <link rel="apple-touch-icon-precomposed" href="icon.png">
 
     <style>
-        /* 全体のリセットと拡大・選択の禁止 */
+        /* 全体のリセットと拡大・選択の禁止、タッチ遅延の排除 */
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation; /* タップの反応速度を最大化 */
         }
         html, body {
             margin: 0;
@@ -123,10 +124,12 @@
             font-size: 38px;
             font-weight: 400;
             cursor: pointer;
-            transition: opacity 0.1s;
+            transition: background-color 0.1s;
         }
-        .btn:active {
-            opacity: 0.6;
+        /* タップした瞬間に色が変わるフィードバックを高速化 */
+        .btn:active, .btn.touched {
+            background-color: #555;
+            opacity: 0.7;
         }
 
         /* 削除・AC・％ボタン（濃いグレー＆白文字） */
@@ -135,12 +138,18 @@
             color: #fff;
             font-size: 30px;
         }
+        .btn.function:active, .btn.function.touched {
+            background-color: #707072;
+        }
 
         /* 演算子ボタン（右列） */
         .btn.operator {
             background-color: #ff9f0a;
             color: #fff;
             font-size: 42px;
+        }
+        .btn.operator:active, .btn.operator.touched {
+            background-color: #ffb340;
         }
 
         .btn.zero {
@@ -170,39 +179,34 @@
         
         <div class="buttons">
             <!-- 1段目 -->
-            <div class="btn function" onclick="handleKey('backspace')">⌫</div>
-            <div class="btn function" onclick="handleKey('AC')">AC</div>
-            <div class="btn function" onclick="handleKey('%')">%</div>
-            <div class="btn operator" id="divide-btn" 
-                 typeof="button"
-                 ontouchstart="startPress(event)" 
-                 onmousedown="startPress(event)"
-                 ontouchend="endPress(event)" 
-                 onmouseup="endPress(event)">÷</div>
+            <div class="btn function" data-key="backspace">⌫</div>
+            <div class="btn function" data-key="AC">AC</div>
+            <div class="btn function" data-key="%">%</div>
+            <div class="btn operator" id="divide-btn" data-key="÷">÷</div>
 
             <!-- 2段目 -->
-            <div class="btn" onclick="handleKey('7')">7</div>
-            <div class="btn" onclick="handleKey('8')">8</div>
-            <div class="btn" onclick="handleKey('9')">9</div>
-            <div class="btn operator" onclick="handleKey('×')">×</div>
+            <div class="btn" data-key="7">7</div>
+            <div class="btn" data-key="8">8</div>
+            <div class="btn" data-key="9">9</div>
+            <div class="btn operator" data-key="×">×</div>
 
             <!-- 3段目 -->
-            <div class="btn" onclick="handleKey('4')">4</div>
-            <div class="btn" onclick="handleKey('5')">5</div>
-            <div class="btn" onclick="handleKey('6')">6</div>
-            <div class="btn operator" onclick="handleKey('－')">－</div>
+            <div class="btn" data-key="4">4</div>
+            <div class="btn" data-key="5">5</div>
+            <div class="btn" data-key="6">6</div>
+            <div class="btn operator" data-key="－">－</div>
 
             <!-- 4段目 -->
-            <div class="btn" onclick="handleKey('1')">1</div>
-            <div class="btn" onclick="handleKey('2')">2</div>
-            <div class="btn" onclick="handleKey('3')">3</div>
-            <div class="btn operator" onclick="handleKey('+')">+</div>
+            <div class="btn" data-key="1">1</div>
+            <div class="btn" data-key="2">2</div>
+            <div class="btn" data-key="3">3</div>
+            <div class="btn operator" data-key="+">+</div>
 
             <!-- 5段目 -->
-            <div class="btn" onclick="handleKey('+/-')">+/-</div>
-            <div class="btn zero" onclick="handleKey('0')">0</div>
-            <div class="btn" onclick="handleKey('.')">.</div>
-            <div class="btn operator" onclick="handleKey('=')">=</div>
+            <div class="btn" data-key="+/-">+/-</div>
+            <div class="btn zero" data-key="0">0</div>
+            <div class="btn" data-key=".">.</div>
+            <div class="btn operator" data-key="=">=</div>
         </div>
     </div>
 
@@ -217,7 +221,7 @@
         let isMagicMode = false;     
         let magicNumber = null;      
 
-        // 長押しタイマー用
+        // 長押しタイマー用（÷ボタン用）
         let pressTimer = null;
         let isLongPressActioned = false;
 
@@ -227,22 +231,12 @@
                 event.preventDefault();
             }
         }, { passive: false });
-        
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
 
         // ディスプレイ描画更新
         function updateDisplay() {
             const resEl = document.getElementById("result");
             const formEl = document.getElementById("formula");
             
-            // 下段（青線部）に表示する文字列の組み立て
             let mainDisplayStr = "";
             for (let item of formulaHistory) {
                 mainDisplayStr += item;
@@ -251,7 +245,6 @@
 
             let formattedRes = mainDisplayStr;
             
-            // もし式ではなく純粋な数字の単体であればカンマを入れる
             if (formulaHistory.length === 0 && !isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
                 parts[0] = Number(parts[0]).toLocaleString('en-US');
@@ -261,7 +254,6 @@
             resEl.innerText = formattedRes;
             formEl.innerText = lastCompletedExpression;
 
-            // 文字数に応じたフォントサイズ自動調整
             if (formattedRes.length > 12) {
                 resEl.style.fontSize = "36px";
             } else if (formattedRes.length > 9) {
@@ -270,23 +262,6 @@
                 resEl.style.fontSize = "58px";
             } else {
                 resEl.style.fontSize = "70px";
-            }
-        }
-
-        // ÷ボタン長押し検知 (2秒)
-        function startPress(e) {
-            e.preventDefault();
-            isLongPressActioned = false;
-            pressTimer = setTimeout(() => {
-                toggleMagicMode();
-                isLongPressActioned = true;
-            }, 2000);
-        }
-
-        function endPress(e) {
-            clearTimeout(pressTimer);
-            if (!isLongPressActioned) {
-                handleKey('÷');
             }
         }
 
@@ -398,31 +373,24 @@
                 currentInput = String(parseFloat(currentInput) / 100);
             } else if (['+', '－', '×', '÷'].includes(key)) {
                 lastCompletedExpression = "";
-                
-                // 【修正】もしすでに演算子入力待ち状態（isResetOnNextKeyがtrue）であれば、
-                // 最後の演算子を置き換えるだけにする（例: 23+を押したあとに×を押したら 23× になるように）
                 if (isResetOnNextKey && formulaHistory.length > 0) {
                     formulaHistory[formulaHistory.length - 1] = key;
                 } else {
                     formulaHistory.push(currentInput);
                     formulaHistory.push(key);
                 }
-                
-                currentInput = ""; // 演算子押下直後はcurrentInputを空にして重複表示を防止
+                currentInput = "";
                 isResetOnNextKey = true;
             } else if (key === '=') {
                 if (formulaHistory.length > 0 || currentInput !== "") {
-                    // フル式の文字列を作成
                     let fullExpressionStr = "";
                     for (let item of formulaHistory) {
                         fullExpressionStr += item;
                     }
                     fullExpressionStr += currentInput;
 
-                    // 1. 本来の計算結果を算出
                     let realResult = calculateSafe(fullExpressionStr);
 
-                    // 2. 300以下の判定ロジック
                     if (magicNumber !== null && (realResult === "Error" || realResult > 300)) {
                         currentInput = magicNumber;
                     } else {
@@ -430,7 +398,6 @@
                     }
 
                     lastCompletedExpression = fullExpressionStr + " =";
-                    
                     formulaHistory = [];
                     isResetOnNextKey = true;
                 }
@@ -453,6 +420,64 @@
                 return "Error";
             }
         }
+
+        // 【超高速化対応】遅延のない touchstart / mousedown イベントのバインド
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            const key = button.getAttribute('data-key');
+
+            if (key === '÷') {
+                // ÷ボタン専用：長押し（マジシャンモード切替）と通常タップの切り分け
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isLongPressActioned = false;
+                    pressTimer = setTimeout(() => {
+                        toggleMagicMode();
+                        isLongPressActioned = true;
+                    }, 2000);
+                }, { passive: false });
+
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(pressTimer);
+                    if (!isLongPressActioned) {
+                        handleKey('÷');
+                    }
+                });
+
+                // PCでのマウス操作用フォールバック
+                button.addEventListener('mousedown', (e) => {
+                    isLongPressActioned = false;
+                    pressTimer = setTimeout(() => {
+                        toggleMagicMode();
+                        isLongPressActioned = true;
+                    }, 2000);
+                });
+                button.addEventListener('mouseup', (e) => {
+                    clearTimeout(pressTimer);
+                    if (!isLongPressActioned) {
+                        handleKey('÷');
+                    }
+                });
+            } else {
+                // その他のすべてのボタン：タッチした瞬間に即座に反応（遅延ゼロ）
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    button.classList.add('touched');
+                    handleKey(key);
+                }, { passive: false });
+
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    button.classList.remove('touched');
+                }, { passive: false });
+
+                // PCマウス用
+                button.addEventListener('mousedown', () => {
+                    handleKey(key);
+                });
+            }
+        });
 
         // 初期化
         updateDisplay();
