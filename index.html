@@ -9,12 +9,12 @@
     <meta name="apple-mobile-web-app-title" content="電卓">
     <title>電卓</title>
     
-    <!-- iPhoneホーム画面用のアイコン設定（同フォルダのicon.pngを読み込み） -->
+    <!-- iPhoneホーム画面用のアイコン設定 -->
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="apple-touch-icon-precomposed" href="icon.png">
 
     <style>
-        /* 全体のリセットと拡大・選択の禁止（アプリ化のための必須処理） */
+        /* 全体のリセットと拡大・選択の禁止 */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -33,17 +33,17 @@
             position: fixed;
         }
 
-        /* 電卓全体のコンテナ */
+        /* 電卓全体のコンテナ（配置をもう少し下にずらすため下部余白を調整） */
         .calculator {
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             width: 100%;
             height: 100%;
-            padding: 20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;
+            padding: 20px 16px calc(35px + env(safe-area-inset-bottom)) 16px;
         }
 
-        /* 上部ヘッダー（アイコン用スペース） */
+        /* 上部ヘッダー */
         .header {
             position: absolute;
             top: calc(10px + env(safe-area-inset-top));
@@ -69,7 +69,7 @@
         /* マジシャンモードの隠しMマーク */
         #magic-indicator {
             font-size: 12px;
-            color: #333; /* 目立たない薄いグレー */
+            color: #333;
             font-weight: bold;
             visibility: hidden;
         }
@@ -82,15 +82,16 @@
             flex-direction: column;
             justify-content: flex-end;
             flex-grow: 1;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .formula {
             color: #888;
-            font-size: 24px;
-            min-height: 30px;
+            font-size: 28px;
+            min-height: 36px;
             word-wrap: break-word;
             word-break: break-all;
             margin-bottom: 5px;
+            font-weight: 300;
         }
         .result {
             color: #fff;
@@ -101,14 +102,14 @@
             text-overflow: clip;
         }
 
-        /* ボタンのグリッド構造 */
+        /* ボタンのグリッド構造（ボタンを少し大きくするため隙間を狭く調整） */
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
+            gap: 10px;
         }
 
-        /* ボタンの共通スタイル */
+        /* ボタンの共通スタイル（ボタンサイズを拡大・文字も拡大） */
         .btn {
             background-color: #333;
             color: #fff;
@@ -117,7 +118,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 32px;
+            font-size: 38px; /* 文字サイズを大きめに変更 */
             font-weight: 400;
             cursor: pointer;
             transition: opacity 0.1s;
@@ -126,20 +127,20 @@
             opacity: 0.6;
         }
 
-        /* 機能ボタン（最上段：バックスペース、AC、％） */
+        /* 削除・AC・％ボタン（ご要望の濃いグレー＆白文字） */
         .btn.function {
-            background-color: #a5a5a5;
-            color: #000;
-            font-size: 26px;
+            background-color: #505052; /* 通常数字ボタン(#333)よりわずかに薄い、絶妙な濃いグレー */
+            color: #fff;               /* 文字色は白に変更 */
+            font-size: 30px;
         }
+
         /* 演算子ボタン（右列：÷, ×, －, ＋, ＝） */
         .btn.operator {
             background-color: #ff9f0a;
             color: #fff;
-            font-size: 36px;
+            font-size: 42px;
         }
 
-        /* 0ボタン */
         .btn.zero {
             grid-column: span 1;
         }
@@ -148,8 +149,13 @@
 <body>
 
     <div class="header">
-        <div class="header-btn">☰</div>
+        <div class="header-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
         <div id="magic-indicator">M</div>
+        <div class="header-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>
+        </div>
     </div>
 
     <div class="calculator">
@@ -199,9 +205,7 @@
     <script>
         // 状態管理用変数
         let currentInput = "0";      
-        let memoryFormula = "";      
-        let activeOperator = null;   
-        let previousValue = null;    
+        let formulaHistory = [];     // 複数の数や演算子を順番に保持する配列
         let isResetOnNextKey = false;
 
         // マジック用変数
@@ -228,11 +232,12 @@
             lastTouchEnd = now;
         }, false);
 
-        // ディスプレイ描画更新
+        // ディスプレイ描画・計算式表示更新
         function updateDisplay() {
             const resEl = document.getElementById("result");
             const formEl = document.getElementById("formula");
             
+            // カンマ区切り整形
             let formatted = currentInput;
             if (!isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
@@ -241,8 +246,16 @@
             }
             
             resEl.innerText = formatted;
-            formEl.innerText = memoryFormula;
 
+            // ご要望通りのリアルタイム計算式文字列の構築（例: 96×65×）
+            let formulaStr = "";
+            for (let item of formulaHistory) {
+                formulaStr += item;
+            }
+            formulaStr += currentInput;
+            formEl.innerText = formulaStr;
+
+            // 文字数に応じたフォントサイズ自動調整
             if (formatted.length > 10) {
                 resEl.style.fontSize = "40px";
             } else if (formatted.length > 7) {
@@ -279,7 +292,7 @@
                 } else {
                     currentInput = "0";
                 }
-                memoryFormula = "";
+                formulaHistory = [];
             } else {
                 isMagicMode = false;
                 document.getElementById("magic-indicator").style.visibility = "hidden";
@@ -289,7 +302,7 @@
                     magicNumber = currentInput;
                 }
                 currentInput = "0";
-                memoryFormula = "";
+                formulaHistory = [];
             }
             updateDisplay();
             if (navigator.vibrate) navigator.vibrate(50);
@@ -329,7 +342,7 @@
             updateDisplay();
         }
 
-        // 通常モード時の計算・トリック処理
+        // 通常モード時の計算・複数演算対応処理
         function handleNormalInput(key) {
             if (!isNaN(key)) {
                 if (currentInput === "0" || isResetOnNextKey) {
@@ -350,15 +363,15 @@
                 }
             } else if (key === 'AC') {
                 currentInput = "0";
-                memoryFormula = "";
-                previousValue = null;
-                activeOperator = null;
+                formulaHistory = [];
                 isResetOnNextKey = false;
             } else if (key === 'backspace') {
-                if (currentInput.length > 1) {
-                    currentInput = currentInput.slice(0, -1);
-                } else {
-                    currentInput = "0";
+                if (!isResetOnNextKey && currentInput.length > 0) {
+                    if (currentInput.length > 1) {
+                        currentInput = currentInput.slice(0, -1);
+                    } else {
+                        currentInput = "0";
+                    }
                 }
             } else if (key === '+/-') {
                 if (currentInput !== "0") {
@@ -367,40 +380,56 @@
             } else if (key === '%') {
                 currentInput = String(parseFloat(currentInput) / 100);
             } else if (['+', '－', '×', '÷'].includes(key)) {
-                previousValue = currentInput;
-                activeOperator = key;
-                memoryFormula = previousValue + " " + key;
+                // 連続計算に対応：履歴に現在の入力値と演算子を追加していく
+                formulaHistory.push(currentInput);
+                formulaHistory.push(key);
                 isResetOnNextKey = true;
             } else if (key === '=') {
-                if (activeOperator && previousValue !== null) {
-                    memoryFormula = memoryFormula + " " + currentInput;
-                    
-                    // まず本来の正しい計算結果を算出する
-                    let realResult = 0;
-                    const v1 = parseFloat(previousValue);
-                    const v2 = parseFloat(currentInput);
-                    switch(activeOperator) {
-                        case '+': realResult = v1 + v2; break;
-                        case '－': realResult = v1 - v2; break;
-                        case '×': realResult = v1 * v2; break;
-                        case '÷': realResult = v2 !== 0 ? v1 / v2 : "Error"; break;
-                    }
+                // ＝が押されたとき
+                // 演算子のあとに入力値がないまま＝が押された場合のケア
+                let fullExpressionStr = "";
+                for (let item of formulaHistory) {
+                    fullExpressionStr += item;
+                }
+                fullExpressionStr += currentInput;
 
-                    // 【300以下の判定ロジック】
+                if (formulaHistory.length > 0) {
+                    // 1. まず本来の正しい計算結果を算術的に算出する（複数項目対応）
+                    let realResult = calculateSafe(fullExpressionStr);
+
+                    // 2. 300以下の判定ロジック
                     if (magicNumber !== null && (realResult === "Error" || realResult > 300)) {
-                        // マジックナンバーが設定されていて、かつ正しい答えが300を超える（またはエラーの）場合はすり替える
+                        // マジックナンバーが設定されており、かつ結果が300を超える場合はすり替える
                         currentInput = magicNumber;
                     } else {
-                        // マジックナンバー未設定、または正しい答えが300以下の場合は、本物の電卓として正しい結果を出す
+                        // マジックナンバー未設定、または300以下の安全値なら正しい結果を返す
                         currentInput = String(realResult);
                     }
 
-                    activeOperator = null;
-                    previousValue = null;
+                    formulaHistory = [];
                     isResetOnNextKey = true;
                 }
             }
             updateDisplay();
+        }
+
+        // 文字列の数式（例: "96*65*12" 等）を安全に計算するヘルパー関数
+        function calculateSafe(exprStr) {
+            try {
+                // 画面上の演算子記号をJavaScriptの演算子に置換
+                let sanitized = exprStr
+                    .replace(/×/g, '*')
+                    .replace(/－/g, '-')
+                    .replace(/÷/g, '/');
+                
+                // 安全な範囲で評価
+                let ans = Function('"use strict"; return (' + sanitized + ')')();
+                if (!isFinite(ans)) return "Error";
+                // 小数点以下の長すぎる端数を丸める（必要に応じて）
+                return Math.round(ans * 100000000) / 100000000;
+            } catch (e) {
+                return "Error";
+            }
         }
 
         // 初期化
