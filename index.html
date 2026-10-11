@@ -33,20 +33,20 @@
             position: fixed;
         }
 
-        /* 電卓全体のコンテナ（配置をもう少し下にずらすため下部余白を調整） */
+        /* 電卓全体のコンテナ（0ボタンが画面下端に近づくよう余白を調整） */
         .calculator {
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             width: 100%;
             height: 100%;
-            padding: 20px 16px calc(35px + env(safe-area-inset-bottom)) 16px;
+            padding: 10px 16px calc(8px + env(safe-area-inset-bottom)) 16px;
         }
 
         /* 上部ヘッダー */
         .header {
             position: absolute;
-            top: calc(10px + env(safe-area-inset-top));
+            top: calc(8px + env(safe-area-inset-top));
             left: 20px;
             right: 20px;
             display: flex;
@@ -76,23 +76,25 @@
 
         /* ディスプレイ部分 */
         .display {
-            padding: 10px;
+            padding: 5px 10px;
             text-align: right;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             flex-grow: 1;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
+        /* 上段（赤線部）：＝を押した後の結果表示フェイズでのみ式を表示 */
         .formula {
             color: #888;
-            font-size: 28px;
-            min-height: 36px;
+            font-size: 26px;
+            min-height: 32px;
             word-wrap: break-word;
             word-break: break-all;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
             font-weight: 300;
         }
+        /* 下段・メイン（青線部）：計算途中は随時ここに途中式、＝後は計算結果を表示 */
         .result {
             color: #fff;
             font-size: 70px;
@@ -102,14 +104,14 @@
             text-overflow: clip;
         }
 
-        /* ボタンのグリッド構造（ボタンを少し大きくするため隙間を狭く調整） */
+        /* ボタンのグリッド構造 */
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
 
-        /* ボタンの共通スタイル（ボタンサイズを拡大・文字も拡大） */
+        /* ボタンの共通スタイル */
         .btn {
             background-color: #333;
             color: #fff;
@@ -118,7 +120,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 38px; /* 文字サイズを大きめに変更 */
+            font-size: 38px;
             font-weight: 400;
             cursor: pointer;
             transition: opacity 0.1s;
@@ -127,14 +129,14 @@
             opacity: 0.6;
         }
 
-        /* 削除・AC・％ボタン（ご要望の濃いグレー＆白文字） */
+        /* 削除・AC・％ボタン（濃いグレー＆白文字） */
         .btn.function {
-            background-color: #505052; /* 通常数字ボタン(#333)よりわずかに薄い、絶妙な濃いグレー */
-            color: #fff;               /* 文字色は白に変更 */
+            background-color: #505052;
+            color: #fff;
             font-size: 30px;
         }
 
-        /* 演算子ボタン（右列：÷, ×, －, ＋, ＝） */
+        /* 演算子ボタン（右列） */
         .btn.operator {
             background-color: #ff9f0a;
             color: #fff;
@@ -160,7 +162,9 @@
 
     <div class="calculator">
         <div class="display">
+            <!-- 上段（赤線部）：＝を押した後の結果表示フェイズでのみ式が表示される -->
             <div class="formula" id="formula"></div>
+            <!-- 下段・メイン（青線部）：計算途中は随時途中式、＝後は結果を表示 -->
             <div class="result" id="result">0</div>
         </div>
         
@@ -205,8 +209,9 @@
     <script>
         // 状態管理用変数
         let currentInput = "0";      
-        let formulaHistory = [];     // 複数の数や演算子を順番に保持する配列
+        let formulaHistory = [];     
         let isResetOnNextKey = false;
+        let lastCompletedExpression = ""; // ＝を押した後に上の段に表示する文字列
 
         // マジック用変数
         let isMagicMode = false;     
@@ -232,34 +237,51 @@
             lastTouchEnd = now;
         }, false);
 
-        // ディスプレイ描画・計算式表示更新
+        // ディスプレイ描画更新
         function updateDisplay() {
             const resEl = document.getElementById("result");
             const formEl = document.getElementById("formula");
             
-            // カンマ区切り整形
-            let formatted = currentInput;
-            if (!isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
+            // 下段（青線部）に表示する文字列の組み立て
+            let mainDisplayStr = "";
+            
+            if (isResetOnNextKey && lastCompletedExpression === "") {
+                // 演算子を押した直後などはこれまでの履歴を表示
+                for (let item of formulaHistory) {
+                    mainDisplayStr += item;
+                }
+                mainDisplayStr += currentInput;
+            } else {
+                // 通常の入力中、または数字編集中
+                for (let item of formulaHistory) {
+                    mainDisplayStr += item;
+                }
+                mainDisplayStr += currentInput;
+            }
+
+            // フォーマット（カンマ区切り）の適用
+            // ※ただし式の中に演算子が含まれる場合はそのまま文字列として結合・表示する
+            let formattedRes = mainDisplayStr;
+            
+            // もし式ではなく純粋な数字（または計算結果）の単体であればカンマを入れる
+            if (formulaHistory.length === 0 && !isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
                 parts[0] = Number(parts[0]).toLocaleString('en-US');
-                formatted = parts.join('.');
+                formattedRes = parts.join('.');
             }
-            
-            resEl.innerText = formatted;
 
-            // ご要望通りのリアルタイム計算式文字列の構築（例: 96×65×）
-            let formulaStr = "";
-            for (let item of formulaHistory) {
-                formulaStr += item;
-            }
-            formulaStr += currentInput;
-            formEl.innerText = formulaStr;
+            resEl.innerText = formattedRes;
 
-            // 文字数に応じたフォントサイズ自動調整
-            if (formatted.length > 10) {
-                resEl.style.fontSize = "40px";
-            } else if (formatted.length > 7) {
-                resEl.style.fontSize = "55px";
+            // 上段（赤線部）：＝を押した後の結果表示フェイズでのみ計算式を表示、それ以外は空欄
+            formEl.innerText = lastCompletedExpression;
+
+            // 文字数に応じたフォントサイズ自動調整（下段青線部）
+            if (formattedRes.length > 12) {
+                resEl.style.fontSize = "36px";
+            } else if (formattedRes.length > 9) {
+                resEl.style.fontSize = "48px";
+            } else if (formattedRes.length > 6) {
+                resEl.style.fontSize = "58px";
             } else {
                 resEl.style.fontSize = "70px";
             }
@@ -293,6 +315,7 @@
                     currentInput = "0";
                 }
                 formulaHistory = [];
+                lastCompletedExpression = "";
             } else {
                 isMagicMode = false;
                 document.getElementById("magic-indicator").style.visibility = "hidden";
@@ -303,6 +326,7 @@
                 }
                 currentInput = "0";
                 formulaHistory = [];
+                lastCompletedExpression = "";
             }
             updateDisplay();
             if (navigator.vibrate) navigator.vibrate(50);
@@ -342,8 +366,15 @@
             updateDisplay();
         }
 
-        // 通常モード時の計算・複数演算対応処理
+        // 通常モード時の計算処理
         function handleNormalInput(key) {
+            // 新しく入力を始める時、直前に「＝」を押していたら画面をクリアする
+            if (lastCompletedExpression !== "" && (!isNaN(key) || key === '.')) {
+                formulaHistory = [];
+                currentInput = "0";
+                lastCompletedExpression = "";
+            }
+
             if (!isNaN(key)) {
                 if (currentInput === "0" || isResetOnNextKey) {
                     currentInput = key;
@@ -364,6 +395,7 @@
             } else if (key === 'AC') {
                 currentInput = "0";
                 formulaHistory = [];
+                lastCompletedExpression = "";
                 isResetOnNextKey = false;
             } else if (key === 'backspace') {
                 if (!isResetOnNextKey && currentInput.length > 0) {
@@ -380,32 +412,33 @@
             } else if (key === '%') {
                 currentInput = String(parseFloat(currentInput) / 100);
             } else if (['+', '－', '×', '÷'].includes(key)) {
-                // 連続計算に対応：履歴に現在の入力値と演算子を追加していく
+                // 演算子が押されたら、直前の完了式表示を消去して途中式モードへ
+                lastCompletedExpression = "";
                 formulaHistory.push(currentInput);
                 formulaHistory.push(key);
                 isResetOnNextKey = true;
             } else if (key === '=') {
-                // ＝が押されたとき
-                // 演算子のあとに入力値がないまま＝が押された場合のケア
-                let fullExpressionStr = "";
-                for (let item of formulaHistory) {
-                    fullExpressionStr += item;
-                }
-                fullExpressionStr += currentInput;
-
                 if (formulaHistory.length > 0) {
-                    // 1. まず本来の正しい計算結果を算術的に算出する（複数項目対応）
+                    // フル式の文字列を作成（例: "59×87×" + "12"）
+                    let fullExpressionStr = "";
+                    for (let item of formulaHistory) {
+                        fullExpressionStr += item;
+                    }
+                    fullExpressionStr += currentInput;
+
+                    // 1. 本来の計算結果を算出
                     let realResult = calculateSafe(fullExpressionStr);
 
                     // 2. 300以下の判定ロジック
                     if (magicNumber !== null && (realResult === "Error" || realResult > 300)) {
-                        // マジックナンバーが設定されており、かつ結果が300を超える場合はすり替える
                         currentInput = magicNumber;
                     } else {
-                        // マジックナンバー未設定、または300以下の安全値なら正しい結果を返す
                         currentInput = String(realResult);
                     }
 
+                    // ＝が押されたので、上の段（赤線部）にこれまでの式＋「＝」をセット
+                    lastCompletedExpression = fullExpressionStr + " =";
+                    
                     formulaHistory = [];
                     isResetOnNextKey = true;
                 }
@@ -413,19 +446,16 @@
             updateDisplay();
         }
 
-        // 文字列の数式（例: "96*65*12" 等）を安全に計算するヘルパー関数
+        // 安全な計算用ヘルパー
         function calculateSafe(exprStr) {
             try {
-                // 画面上の演算子記号をJavaScriptの演算子に置換
                 let sanitized = exprStr
                     .replace(/×/g, '*')
                     .replace(/－/g, '-')
                     .replace(/÷/g, '/');
                 
-                // 安全な範囲で評価
                 let ans = Function('"use strict"; return (' + sanitized + ')')();
                 if (!isFinite(ans)) return "Error";
-                // 小数点以下の長すぎる端数を丸める（必要に応じて）
                 return Math.round(ans * 100000000) / 100000000;
             } catch (e) {
                 return "Error";
