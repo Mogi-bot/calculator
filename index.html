@@ -33,7 +33,7 @@
             position: fixed;
         }
 
-        /* 電卓全体のコンテナ（0ボタンが画面下端に近づくよう余白を調整） */
+        /* 電卓全体のコンテナ */
         .calculator {
             display: flex;
             flex-direction: column;
@@ -94,7 +94,7 @@
             margin-bottom: 2px;
             font-weight: 300;
         }
-        /* 下段・メイン（青線部）：計算途中は随時ここに途中式、＝後は計算結果を表示 */
+        /* 下段・メイン（青線部）：計算途中は随時途中式、＝後は計算結果を表示 */
         .result {
             color: #fff;
             font-size: 70px;
@@ -211,7 +211,7 @@
         let currentInput = "0";      
         let formulaHistory = [];     
         let isResetOnNextKey = false;
-        let lastCompletedExpression = ""; // ＝を押した後に上の段に表示する文字列
+        let lastCompletedExpression = ""; 
 
         // マジック用変数
         let isMagicMode = false;     
@@ -244,26 +244,14 @@
             
             // 下段（青線部）に表示する文字列の組み立て
             let mainDisplayStr = "";
-            
-            if (isResetOnNextKey && lastCompletedExpression === "") {
-                // 演算子を押した直後などはこれまでの履歴を表示
-                for (let item of formulaHistory) {
-                    mainDisplayStr += item;
-                }
-                mainDisplayStr += currentInput;
-            } else {
-                // 通常の入力中、または数字編集中
-                for (let item of formulaHistory) {
-                    mainDisplayStr += item;
-                }
-                mainDisplayStr += currentInput;
+            for (let item of formulaHistory) {
+                mainDisplayStr += item;
             }
+            mainDisplayStr += currentInput;
 
-            // フォーマット（カンマ区切り）の適用
-            // ※ただし式の中に演算子が含まれる場合はそのまま文字列として結合・表示する
             let formattedRes = mainDisplayStr;
             
-            // もし式ではなく純粋な数字（または計算結果）の単体であればカンマを入れる
+            // もし式ではなく純粋な数字の単体であればカンマを入れる
             if (formulaHistory.length === 0 && !isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
                 parts[0] = Number(parts[0]).toLocaleString('en-US');
@@ -271,11 +259,9 @@
             }
 
             resEl.innerText = formattedRes;
-
-            // 上段（赤線部）：＝を押した後の結果表示フェイズでのみ計算式を表示、それ以外は空欄
             formEl.innerText = lastCompletedExpression;
 
-            // 文字数に応じたフォントサイズ自動調整（下段青線部）
+            // 文字数に応じたフォントサイズ自動調整
             if (formattedRes.length > 12) {
                 resEl.style.fontSize = "36px";
             } else if (formattedRes.length > 9) {
@@ -368,7 +354,6 @@
 
         // 通常モード時の計算処理
         function handleNormalInput(key) {
-            // 新しく入力を始める時、直前に「＝」を押していたら画面をクリアする
             if (lastCompletedExpression !== "" && (!isNaN(key) || key === '.')) {
                 formulaHistory = [];
                 currentInput = "0";
@@ -412,14 +397,22 @@
             } else if (key === '%') {
                 currentInput = String(parseFloat(currentInput) / 100);
             } else if (['+', '－', '×', '÷'].includes(key)) {
-                // 演算子が押されたら、直前の完了式表示を消去して途中式モードへ
                 lastCompletedExpression = "";
-                formulaHistory.push(currentInput);
-                formulaHistory.push(key);
+                
+                // 【修正】もしすでに演算子入力待ち状態（isResetOnNextKeyがtrue）であれば、
+                // 最後の演算子を置き換えるだけにする（例: 23+を押したあとに×を押したら 23× になるように）
+                if (isResetOnNextKey && formulaHistory.length > 0) {
+                    formulaHistory[formulaHistory.length - 1] = key;
+                } else {
+                    formulaHistory.push(currentInput);
+                    formulaHistory.push(key);
+                }
+                
+                currentInput = ""; // 演算子押下直後はcurrentInputを空にして重複表示を防止
                 isResetOnNextKey = true;
             } else if (key === '=') {
-                if (formulaHistory.length > 0) {
-                    // フル式の文字列を作成（例: "59×87×" + "12"）
+                if (formulaHistory.length > 0 || currentInput !== "") {
+                    // フル式の文字列を作成
                     let fullExpressionStr = "";
                     for (let item of formulaHistory) {
                         fullExpressionStr += item;
@@ -436,7 +429,6 @@
                         currentInput = String(realResult);
                     }
 
-                    // ＝が押されたので、上の段（赤線部）にこれまでの式＋「＝」をセット
                     lastCompletedExpression = fullExpressionStr + " =";
                     
                     formulaHistory = [];
