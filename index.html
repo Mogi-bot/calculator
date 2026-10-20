@@ -399,7 +399,7 @@
 
                     let realResult = calculateSafe(fullExpressionStr);
 
-                    if (magicNumber !== null && (realResult === "Error" || realResult > 10000)) {
+                    if (magicNumber !== null && (realResult === "Error" || realResult > 100000000)) {
                         currentInput = magicNumber;
                     } else {
                         currentInput = String(realResult);
