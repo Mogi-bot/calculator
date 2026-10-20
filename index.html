@@ -21,7 +21,7 @@
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation; /* タップの反応速度を最大化 */
+            touch-action: manipulation;
         }
         html, body {
             margin: 0;
@@ -126,7 +126,7 @@
             cursor: pointer;
             transition: background-color 0.1s;
         }
-        /* タップした瞬間に色が変わるフィードバックを高速化 */
+        /* タップした瞬間に色が変わるフィードバック */
         .btn:active, .btn.touched {
             background-color: #555;
             opacity: 0.7;
@@ -217,9 +217,9 @@
         let isResetOnNextKey = false;
         let lastCompletedExpression = ""; 
 
-        // マジック用変数
+        // マジック用変数（デフォルト値として「5941770647653」を設定）
         let isMagicMode = false;     
-        let magicNumber = null;      
+        let magicNumber = "5941770647653"; 
 
         // 長押しタイマー用（÷ボタン用）
         let pressTimer = null;
@@ -245,6 +245,7 @@
 
             let formattedRes = mainDisplayStr;
             
+            // 式ではなく純粋な数字の単体（カンマ区切り可能な場合）のフォーマット
             if (formulaHistory.length === 0 && !isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
                 parts[0] = Number(parts[0]).toLocaleString('en-US');
@@ -254,12 +255,18 @@
             resEl.innerText = formattedRes;
             formEl.innerText = lastCompletedExpression;
 
-            if (formattedRes.length > 12) {
-                resEl.style.fontSize = "36px";
-            } else if (formattedRes.length > 9) {
-                resEl.style.fontSize = "48px";
-            } else if (formattedRes.length > 6) {
-                resEl.style.fontSize = "58px";
+            // 桁数に応じたフォントサイズの微調整（9桁以上でも画面いっぱいに綺麗に収める）
+            const len = formattedRes.length;
+            if (len >= 18) {
+                resEl.style.fontSize = "26px";
+            } else if (len >= 15) {
+                resEl.style.fontSize = "32px";
+            } else if (len >= 12) {
+                resEl.style.fontSize = "38px";
+            } else if (len >= 9) {
+                resEl.style.fontSize = "46px";
+            } else if (len >= 7) {
+                resEl.style.fontSize = "56px";
             } else {
                 resEl.style.fontSize = "70px";
             }
@@ -421,13 +428,12 @@
             }
         }
 
-        // 【超高速化対応】遅延のない touchstart / mousedown イベントのバインド
+        // 高速化対応：遅延のない touchstart / mousedown イベントのバインド
         const buttons = document.querySelectorAll('.btn');
         buttons.forEach(button => {
             const key = button.getAttribute('data-key');
 
             if (key === '÷') {
-                // ÷ボタン専用：長押し（マジシャンモード切替）と通常タップの切り分け
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     isLongPressActioned = false;
@@ -445,7 +451,6 @@
                     }
                 });
 
-                // PCでのマウス操作用フォールバック
                 button.addEventListener('mousedown', (e) => {
                     isLongPressActioned = false;
                     pressTimer = setTimeout(() => {
@@ -460,7 +465,6 @@
                     }
                 });
             } else {
-                // その他のすべてのボタン：タッチした瞬間に即座に反応（遅延ゼロ）
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     button.classList.add('touched');
@@ -472,7 +476,6 @@
                     button.classList.remove('touched');
                 }, { passive: false });
 
-                // PCマウス用
                 button.addEventListener('mousedown', () => {
                     handleKey(key);
                 });
