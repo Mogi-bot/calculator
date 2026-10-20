@@ -75,7 +75,7 @@
             visibility: hidden;
         }
 
-        /* ディスプレイ部分（右寄せに戻し、長くなったときは左側が見切れるようにする） */
+        /* ディスプレイ部分 */
         .display {
             padding: 5px 6px;
             text-align: right;
@@ -84,18 +84,14 @@
             justify-content: flex-end;
             flex-grow: 1;
             margin-bottom: 5px;
-            overflow: hidden;
         }
         /* 上段（赤線部）：＝を押した後の結果表示フェイズでのみ式を表示 */
         .formula {
             color: #888;
             font-size: 26px;
             min-height: 32px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: clip;
-            direction: rtl; /* 右側を優先して表示し、左側を見切らせる */
-            text-align: right;
+            word-wrap: break-word;
+            word-break: break-all;
             margin-bottom: 2px;
             font-weight: 300;
         }
@@ -107,8 +103,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: clip;
-            direction: rtl; /* 右側（いま入力している末尾）を常に表示し、あふれた左側を見切らせる */
-            text-align: right;
         }
 
         /* ボタンのグリッド構造 */
@@ -132,12 +126,13 @@
             cursor: pointer;
             transition: background-color 0.1s;
         }
+        /* タップした瞬間に色が変わるフィードバック */
         .btn:active, .btn.touched {
             background-color: #555;
             opacity: 0.7;
         }
 
-        /* 削除・AC・％ボタン */
+        /* 削除・AC・％ボタン（濃いグレー＆白文字） */
         .btn.function {
             background-color: #505052;
             color: #fff;
@@ -176,9 +171,9 @@
 
     <div class="calculator">
         <div class="display">
-            <!-- 上段：＝を押した後の結果表示フェイズでのみ式が表示される -->
+            <!-- 上段（赤線部）：＝を押した後の結果表示フェイズでのみ式が表示される -->
             <div class="formula" id="formula"></div>
-            <!-- 下段・メイン：計算途中は随時途中式、＝後は結果を表示 -->
+            <!-- 下段・メイン（青線部）：計算途中は随時途中式、＝後は結果を表示 -->
             <div class="result" id="result">0</div>
         </div>
         
@@ -222,7 +217,7 @@
         let isResetOnNextKey = false;
         let lastCompletedExpression = ""; 
 
-        // マジック用変数（デフォルト値：「5941770647653」）
+        // マジック用変数（デフォルト値として「5941770647653」を設定）
         let isMagicMode = false;     
         let magicNumber = "5941770647653"; 
 
@@ -250,6 +245,7 @@
 
             let formattedRes = mainDisplayStr;
             
+            // 式ではなく純粋な数字の単体（カンマ区切り可能な場合）のフォーマット
             if (formulaHistory.length === 0 && !isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
                 parts[0] = Number(parts[0]).toLocaleString('en-US');
@@ -259,14 +255,15 @@
             resEl.innerText = formattedRes;
             formEl.innerText = lastCompletedExpression;
 
-            // 桁数に応じたフォントサイズの微調整
+            // 文字数（カンマ含む）に応じたフォントサイズの微調整
+            // 左側の余白を活用し、17文字前後（5,941,770,647,653）でも画面幅いっぱいに大きく表示されるよう最適化
             const len = formattedRes.length;
             if (len >= 22) {
-                resEl.style.fontSize = "32px";
+                resEl.style.fontSize = "28px";
             } else if (len >= 18) {
-                resEl.style.fontSize = "38px";
+                resEl.style.fontSize = "35px";
             } else if (len >= 15) {
-                resEl.style.fontSize = "45px";
+                resEl.style.fontSize = "42px";  // 5,941,770,647,653（17文字）用：左端近くまで画面いっぱいに広がる大きさ
             } else if (len >= 12) {
                 resEl.style.fontSize = "52px";
             } else if (len >= 9) {
@@ -408,9 +405,7 @@
                         currentInput = String(realResult);
                     }
 
-                    lastCSSFormula = fullExpressionStr + " =";
                     lastCompletedExpression = fullExpressionStr + " =";
-                    
                     formulaHistory = [];
                     isResetOnNextKey = true;
                 }
@@ -434,7 +429,7 @@
             }
         }
 
-        // イベントバインド
+        // 高速化対応：遅延のない touchstart / mousedown イベントのバインド
         const buttons = document.querySelectorAll('.btn');
         buttons.forEach(button => {
             const key = button.getAttribute('data-key');
