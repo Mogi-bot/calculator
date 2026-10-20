@@ -75,10 +75,10 @@
             visibility: hidden;
         }
 
-        /* ディスプレイ部分（左揃えに変更し、大きい桁側が左端から綺麗に表示されるようにする） */
+        /* ディスプレイ部分（右寄せに戻し、長くなったときは左側が見切れるようにする） */
         .display {
             padding: 5px 6px;
-            text-align: left;
+            text-align: right;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -94,9 +94,10 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: clip;
+            direction: rtl; /* 右側を優先して表示し、左側を見切らせる */
+            text-align: right;
             margin-bottom: 2px;
             font-weight: 300;
-            direction: ltr;
         }
         /* 下段・メイン（青線部）：計算途中は随時途中式、＝後は計算結果を表示 */
         .result {
@@ -106,7 +107,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: clip;
-            direction: ltr; /* 左側（大きい桁）を基準に固定 */
+            direction: rtl; /* 右側（いま入力している末尾）を常に表示し、あふれた左側を見切らせる */
+            text-align: right;
         }
 
         /* ボタンのグリッド構造 */
@@ -257,7 +259,7 @@
             resEl.innerText = formattedRes;
             formEl.innerText = lastCompletedExpression;
 
-            // 桁数に応じたフォントサイズの微調整（左寄せのため、大きい桁が左端に固定される）
+            // 桁数に応じたフォントサイズの微調整
             const len = formattedRes.length;
             if (len >= 22) {
                 resEl.style.fontSize = "32px";
@@ -406,7 +408,9 @@
                         currentInput = String(realResult);
                     }
 
+                    lastCSSFormula = fullExpressionStr + " =";
                     lastCompletedExpression = fullExpressionStr + " =";
+                    
                     formulaHistory = [];
                     isResetOnNextKey = true;
                 }
