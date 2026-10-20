@@ -259,11 +259,11 @@
             // 左側の余白を活用し、17文字前後（5,941,770,647,653）でも画面幅いっぱいに大きく表示されるよう最適化
             const len = formattedRes.length;
             if (len >= 22) {
-                resEl.style.fontSize = "32px";
+                resEl.style.fontSize = "30px";
             } else if (len >= 18) {
-                resEl.style.fontSize = "38px";
+                resEl.style.fontSize = "35px";
             } else if (len >= 15) {
-                resEl.style.fontSize = "45px";  // 5,941,770,647,653（17文字）用：左端近くまで画面いっぱいに広がる大きさ
+                resEl.style.fontSize = "42px";  // 5,941,770,647,653（17文字）用：左端近くまで画面いっぱいに広がる大きさ
             } else if (len >= 12) {
                 resEl.style.fontSize = "52px";
             } else if (len >= 9) {
