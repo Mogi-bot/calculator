@@ -156,35 +156,35 @@
             grid-column: span 1;
         }
 
-        /* ① +/-ボタン専用のカスタムスタイル（＋を小さく、区切り線を45度、位置を調整） */
+        /* +/-ボタン専用のカスタムスタイル（文字サイズを大きく調整） */
         .pm-symbol {
             position: relative;
-            width: 24px;
-            height: 24px;
+            width: 30px;
+            height: 30px;
             display: inline-block;
         }
         .pm-plus {
             position: absolute;
-            top: 0px;
-            left: 1px;
-            font-size: 14px; /* ＋を小さく調整 */
+            top: -2px;
+            left: 0px;
+            font-size: 20px; /* 文字サイズを拡大 */
             font-weight: 300;
             line-height: 1;
         }
         .pm-slash {
             position: absolute;
-            top: 11px;
-            left: 5px;
-            width: 14px;
-            height: 1.5px;
+            top: 14px;
+            left: 4px;
+            width: 20px;
+            height: 2px; /* 少し太さも持たせて視認性アップ */
             background-color: #fff;
-            transform: rotate(-45deg); /* 45度の傾きに変更 */
+            transform: rotate(-45deg);
         }
         .pm-minus {
             position: absolute;
-            bottom: 0px;
-            right: 1px;
-            font-size: 16px;
+            bottom: -2px;
+            right: 0px;
+            font-size: 22px; /* 文字サイズを拡大 */
             font-weight: 300;
             line-height: 1;
         }
@@ -213,7 +213,6 @@
         <div class="buttons">
             <!-- 1段目 -->
             <div class="btn function" data-key="backspace">⌫</div>
-            <!-- ② AC/Cボタン（初期状態はAC） -->
             <div class="btn function" id="ac-btn" data-key="AC">AC</div>
             <div class="btn function" data-key="%">%</div>
             <div class="btn operator" id="divide-btn" data-key="÷">÷</div>
@@ -236,7 +235,7 @@
             <div class="btn" data-key="3">3</div>
             <div class="btn operator" data-key="+">+</div>
 
-            <!-- 5段目：① +/-ボタンのデザイン改良 -->
+            <!-- 5段目：+/-ボタン -->
             <div class="btn" data-key="+/-">
                 <div class="pm-symbol">
                     <span class="pm-plus">+</span>
@@ -272,10 +271,9 @@
             }
         }, { passive: false });
 
-        // ② AC/Cボタンの表示を切り替える関数
+        // AC/Cボタンの表示を切り替える関数
         function updateACButton() {
             const acBtn = document.getElementById("ac-btn");
-            // 「何も入力されていない（currentInput === "0" かつ履歴なし）」または「＝を押した後の結果表示フェイズ（lastCompletedExpression !== ""）」のときだけ "AC"
             if ((currentInput === "0" && formulaHistory.length === 0) || lastCompletedExpression !== "") {
                 acBtn.innerText = "AC";
             } else {
