@@ -112,7 +112,7 @@
             gap: 10px;
         }
 
-        /* ボタンの共通スタイル */
+        /* ボタンの共通スタイル（数字ボタン） */
         .btn {
             background-color: #333;
             color: #fff;
@@ -132,21 +132,21 @@
             opacity: 0.7;
         }
 
-        /* 削除・AC・％ボタン（濃いグレー＆白文字） */
+        /* 削除・AC・％ボタン（濃いグレー＆白文字：①文字サイズをやや大きく調整） */
         .btn.function {
             background-color: #505052;
             color: #fff;
-            font-size: 30px;
+            font-size: 34px; /* 30pxから拡大 */
         }
         .btn.function:active, .btn.function.touched {
             background-color: #707072;
         }
 
-        /* 演算子ボタン（右列） */
+        /* 演算子ボタン（右列：÷, ×, －, ＋, ＝：①文字サイズをやや大きく調整） */
         .btn.operator {
             background-color: #ff9f0a;
             color: #fff;
-            font-size: 42px;
+            font-size: 46px; /* 42pxから拡大 */
         }
         .btn.operator:active, .btn.operator.touched {
             background-color: #ffb340;
@@ -173,7 +173,7 @@
         <div class="display">
             <!-- 上段（赤線部）：＝を押した後の結果表示フェイズでのみ式が表示される -->
             <div class="formula" id="formula"></div>
-            <!-- 下段・メイン（青線部）：計算途中は随時途中式、＝後は結果を表示 -->
+            <!-- 下段・メイン（青線部）：計算途中は随時途中式、＝後は計算結果を表示 -->
             <div class="result" id="result">0</div>
         </div>
         
@@ -255,15 +255,17 @@
             resEl.innerText = formattedRes;
             formEl.innerText = lastCompletedExpression;
 
-            // 文字数（カンマ含む）に応じたフォントサイズの微調整
-            // 左側の余白を活用し、17文字前後（5,941,770,647,653）でも画面幅いっぱいに大きく表示されるよう最適化
-            const len = formattedRes.length;
+            // ② カンマを除外し、×や＋などの記号を含めた文字数（len）を算出する
+            const lenString = formattedRes.replace(/,/g, '');
+            const len = lenString.length;
+
+            // 文字数に応じたフォントサイズの微調整
             if (len >= 22) {
                 resEl.style.fontSize = "20px";
             } else if (len >= 18) {
                 resEl.style.fontSize = "28px";
             } else if (len >= 15) {
-                resEl.style.fontSize = "38px";  // 5,941,770,647,653（17文字）用：左端近くまで画面いっぱいに広がる大きさ
+                resEl.style.fontSize = "38px"; 
             } else if (len >= 10) {
                 resEl.style.fontSize = "38px";
             } else if (len >= 7) {
