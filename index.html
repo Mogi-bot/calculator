@@ -132,21 +132,21 @@
             opacity: 0.7;
         }
 
-        /* 削除・AC・％ボタン（濃いグレー＆白文字：①文字サイズをやや大きく調整） */
+        /* 削除・AC・％ボタン（濃いグレー＆白文字） */
         .btn.function {
             background-color: #505052;
             color: #fff;
-            font-size: 34px; /* 30pxから拡大 */
+            font-size: 34px;
         }
         .btn.function:active, .btn.function.touched {
             background-color: #707072;
         }
 
-        /* 演算子ボタン（右列：÷, ×, －, ＋, ＝：①文字サイズをやや大きく調整） */
+        /* 演算子ボタン（右列） */
         .btn.operator {
             background-color: #ff9f0a;
             color: #fff;
-            font-size: 46px; /* 42pxから拡大 */
+            font-size: 46px;
         }
         .btn.operator:active, .btn.operator.touched {
             background-color: #ffb340;
@@ -154,6 +154,39 @@
 
         .btn.zero {
             grid-column: span 1;
+        }
+
+        /* ① +/-ボタン専用のカスタムスタイル（＋を小さく、区切り線を45度、位置を調整） */
+        .pm-symbol {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+        .pm-plus {
+            position: absolute;
+            top: 0px;
+            left: 1px;
+            font-size: 14px; /* ＋を小さく調整 */
+            font-weight: 300;
+            line-height: 1;
+        }
+        .pm-slash {
+            position: absolute;
+            top: 11px;
+            left: 5px;
+            width: 14px;
+            height: 1.5px;
+            background-color: #fff;
+            transform: rotate(-45deg); /* 45度の傾きに変更 */
+        }
+        .pm-minus {
+            position: absolute;
+            bottom: 0px;
+            right: 1px;
+            font-size: 16px;
+            font-weight: 300;
+            line-height: 1;
         }
     </style>
 </head>
@@ -171,16 +204,17 @@
 
     <div class="calculator">
         <div class="display">
-            <!-- 上段（赤線部）：＝を押した後の結果表示フェイズでのみ式が表示される -->
+            <!-- 上段：＝を押した後の結果表示フェイズでのみ式が表示される -->
             <div class="formula" id="formula"></div>
-            <!-- 下段・メイン（青線部）：計算途中は随時途中式、＝後は計算結果を表示 -->
+            <!-- 下段・メイン：計算途中は随時途中式、＝後は計算結果を表示 -->
             <div class="result" id="result">0</div>
         </div>
         
         <div class="buttons">
             <!-- 1段目 -->
             <div class="btn function" data-key="backspace">⌫</div>
-            <div class="btn function" data-key="AC">AC</div>
+            <!-- ② AC/Cボタン（初期状態はAC） -->
+            <div class="btn function" id="ac-btn" data-key="AC">AC</div>
             <div class="btn function" data-key="%">%</div>
             <div class="btn operator" id="divide-btn" data-key="÷">÷</div>
 
@@ -202,8 +236,14 @@
             <div class="btn" data-key="3">3</div>
             <div class="btn operator" data-key="+">+</div>
 
-            <!-- 5段目 -->
-            <div class="btn" data-key="+/-">+/-</div>
+            <!-- 5段目：① +/-ボタンのデザイン改良 -->
+            <div class="btn" data-key="+/-">
+                <div class="pm-symbol">
+                    <span class="pm-plus">+</span>
+                    <div class="pm-slash"></div>
+                    <span class="pm-minus">-</span>
+                </div>
+            </div>
             <div class="btn zero" data-key="0">0</div>
             <div class="btn" data-key=".">.</div>
             <div class="btn operator" data-key="=">=</div>
@@ -217,7 +257,7 @@
         let isResetOnNextKey = false;
         let lastCompletedExpression = ""; 
 
-        // マジック用変数（デフォルト値として「5941770647653」を設定）
+        // マジック用変数（デフォルト値：「5941770647653」）
         let isMagicMode = false;     
         let magicNumber = "5941770647653"; 
 
@@ -232,6 +272,17 @@
             }
         }, { passive: false });
 
+        // ② AC/Cボタンの表示を切り替える関数
+        function updateACButton() {
+            const acBtn = document.getElementById("ac-btn");
+            // 「何も入力されていない（currentInput === "0" かつ履歴なし）」または「＝を押した後の結果表示フェイズ（lastCompletedExpression !== ""）」のときだけ "AC"
+            if ((currentInput === "0" && formulaHistory.length === 0) || lastCompletedExpression !== "") {
+                acBtn.innerText = "AC";
+            } else {
+                acBtn.innerText = "C";
+            }
+        }
+
         // ディスプレイ描画更新
         function updateDisplay() {
             const resEl = document.getElementById("result");
@@ -245,7 +296,6 @@
 
             let formattedRes = mainDisplayStr;
             
-            // 式ではなく純粋な数字の単体（カンマ区切り可能な場合）のフォーマット
             if (formulaHistory.length === 0 && !isNaN(currentInput) && currentInput !== "" && !currentInput.includes('e')) {
                 const parts = currentInput.split('.');
                 parts[0] = Number(parts[0]).toLocaleString('en-US');
@@ -255,7 +305,7 @@
             resEl.innerText = formattedRes;
             formEl.innerText = lastCompletedExpression;
 
-            // ② カンマを除外し、×や＋などの記号を含めた文字数（len）を算出する
+            // カンマを除外し、×や＋などの記号を含めた文字数（len）を算出する
             const lenString = formattedRes.replace(/,/g, '');
             const len = lenString.length;
 
@@ -273,6 +323,9 @@
             } else {
                 resEl.style.fontSize = "70px";
             }
+
+            // AC/C表示の更新を連動
+            updateACButton();
         }
 
         // モードの切り替え処理
