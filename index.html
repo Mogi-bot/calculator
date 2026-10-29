@@ -41,7 +41,7 @@
             justify-content: flex-end;
             width: 100%;
             height: 100%;
-            padding: 10px 16px calc(12px + env(safe-area-inset-bottom)) 16px;
+            padding: 10px 16px calc(8px + env(safe-area-inset-bottom)) 16px;
         }
 
         /* 上部ヘッダー */
@@ -77,13 +77,13 @@
 
         /* ディスプレイ部分 */
         .display {
-            padding: 5px 8px;
+            padding: 5px 6px;
             text-align: right;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             flex-grow: 1;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
         /* 上段：＝を押した後の結果表示フェイズでのみ式を表示 */
         .formula {
@@ -109,46 +109,44 @@
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            gap: 10px;
         }
 
         /* ボタンの共通スタイル（数字ボタン） */
         .btn {
-            background-color: #333336;
+            background-color: #333;
             color: #fff;
             border-radius: 50%;
             aspect-ratio: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 36px;
+            font-size: 38px;
             font-weight: 400;
             cursor: pointer;
             transition: background-color 0.1s;
         }
         /* タップした瞬間に色が変わるフィードバック */
         .btn:active, .btn.touched {
-            background-color: #737375;
-            opacity: 0.8;
+            background-color: #555;
+            opacity: 0.7;
         }
 
-        /* 削除・AC・％ボタン（明るいグレー＆黒文字に近いiOS風） */
+        /* 削除・AC・％ボタン（濃いグレー＆白文字） */
         .btn.function {
-            background-color: #a5a5a7;
-            color: #000;
-            font-size: 32px;
-            font-weight: 400;
+            background-color: #505052;
+            color: #fff;
+            font-size: 34px;
         }
         .btn.function:active, .btn.function.touched {
-            background-color: #d8d8d8;
+            background-color: #707072;
         }
 
         /* 演算子ボタン（右列） */
         .btn.operator {
             background-color: #ff9f0a;
             color: #fff;
-            font-size: 42px;
-            font-weight: 400;
+            font-size: 46px;
         }
         .btn.operator:active, .btn.operator.touched {
             background-color: #ffb340;
@@ -158,7 +156,7 @@
             grid-column: span 1;
         }
 
-        /* +/-ボタン専用のカスタムスタイル */
+        /* +/-ボタン専用のカスタムスタイル（文字サイズを大きく調整） */
         .pm-symbol {
             position: relative;
             width: 30px;
@@ -223,7 +221,6 @@
             <div class="btn" data-key="7">7</div>
             <div class="btn" data-key="8">8</div>
             <div class="btn" data-key="9">9</div>
-            <!-- ① ×ボタンのID付与（長押し対応） -->
             <div class="btn operator" id="multiply-btn" data-key="×">×</div>
 
             <!-- 3段目 -->
@@ -263,7 +260,7 @@
         let isMagicMode = false;     
         let magicNumber = "5941770647653"; 
 
-        // ① 閾値 N 設定用変数（デフォルト値：100000000）
+        // 閾値 N 設定用変数（デフォルト値：100000000）
         let thresholdN = 100000000;
         let isNMode = false;
 
@@ -367,7 +364,7 @@
             if (navigator.vibrate) navigator.vibrate(50);
         }
 
-        // ① 閾値 N 設定モードの切り替え処理（×ボタン長押し）
+        // 閾値 N 設定モードの切り替え処理（×ボタン長押し）
         function toggleNMode() {
             if (isMagicMode) return; // マジシャンモード中は切り替えない
 
@@ -407,7 +404,7 @@
             handleNormalInput(key);
         }
 
-        // ① 閾値 N 設定モード中の入力処理
+        // 閾値 N 設定モード中の入力処理
         function handleNInput(key) {
             if (!isNaN(key) || key === '.') {
                 if (currentInput === "0" && key !== '.') {
@@ -594,7 +591,7 @@
                     }
                 });
             } else if (key === '×') {
-                // ① × ボタンの長押し（閾値 N 設定モード切り替え）
+                // × ボタンの長押し（閾値 N 設定モード切り替え）
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     isMultiplyLongPressActioned = false;
