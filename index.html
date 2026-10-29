@@ -41,7 +41,7 @@
             justify-content: flex-end;
             width: 100%;
             height: 100%;
-            padding: 10px 16px calc(8px + env(safe-area-inset-bottom)) 16px;
+            padding: 10px 16px calc(12px + env(safe-area-inset-bottom)) 16px;
         }
 
         /* 上部ヘッダー */
@@ -77,13 +77,13 @@
 
         /* ディスプレイ部分 */
         .display {
-            padding: 5px 6px;
+            padding: 5px 8px;
             text-align: right;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             flex-grow: 1;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         /* 上段：＝を押した後の結果表示フェイズでのみ式を表示 */
         .formula {
@@ -109,44 +109,46 @@
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            gap: 12px;
         }
 
         /* ボタンの共通スタイル（数字ボタン） */
         .btn {
-            background-color: #333;
+            background-color: #333336;
             color: #fff;
             border-radius: 50%;
             aspect-ratio: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 38px;
+            font-size: 36px;
             font-weight: 400;
             cursor: pointer;
             transition: background-color 0.1s;
         }
         /* タップした瞬間に色が変わるフィードバック */
         .btn:active, .btn.touched {
-            background-color: #555;
-            opacity: 0.7;
+            background-color: #737375;
+            opacity: 0.8;
         }
 
-        /* 削除・AC・％ボタン（濃いグレー＆白文字） */
+        /* 削除・AC・％ボタン（明るいグレー＆黒文字に近いiOS風） */
         .btn.function {
-            background-color: #505052;
-            color: #fff;
-            font-size: 34px;
+            background-color: #a5a5a7;
+            color: #000;
+            font-size: 32px;
+            font-weight: 400;
         }
         .btn.function:active, .btn.function.touched {
-            background-color: #707072;
+            background-color: #d8d8d8;
         }
 
         /* 演算子ボタン（右列） */
         .btn.operator {
             background-color: #ff9f0a;
             color: #fff;
-            font-size: 46px;
+            font-size: 42px;
+            font-weight: 400;
         }
         .btn.operator:active, .btn.operator.touched {
             background-color: #ffb340;
@@ -156,7 +158,7 @@
             grid-column: span 1;
         }
 
-        /* +/-ボタン専用のカスタムスタイル（文字サイズを大きく調整） */
+        /* +/-ボタン専用のカスタムスタイル */
         .pm-symbol {
             position: relative;
             width: 30px;
@@ -212,7 +214,7 @@
         
         <div class="buttons">
             <!-- 1段目 -->
-            <div class="btn function" id="backspace-btn" data-key="backspace">⌫</div>
+            <div class="btn function" data-key="backspace">⌫</div>
             <div class="btn function" id="ac-btn" data-key="AC">AC</div>
             <div class="btn function" data-key="%">%</div>
             <div class="btn operator" id="divide-btn" data-key="÷">÷</div>
@@ -221,7 +223,8 @@
             <div class="btn" data-key="7">7</div>
             <div class="btn" data-key="8">8</div>
             <div class="btn" data-key="9">9</div>
-            <div class="btn operator" data-key="×">×</div>
+            <!-- ① ×ボタンのID付与（長押し対応） -->
+            <div class="btn operator" id="multiply-btn" data-key="×">×</div>
 
             <!-- 3段目 -->
             <div class="btn" data-key="4">4</div>
@@ -256,7 +259,7 @@
         let isResetOnNextKey = false;
         let lastCompletedExpression = ""; 
 
-        // マジック用変数（デフォルト値：「5941770647653」）
+        // マジシャンモード用変数（デフォルト値：「5941770647653」）
         let isMagicMode = false;     
         let magicNumber = "5941770647653"; 
 
@@ -264,11 +267,11 @@
         let thresholdN = 100000000;
         let isNMode = false;
 
-        // 長押しタイマー用（÷ボタン用、⌫ボタン用）
+        // 長押しタイマー用（÷ボタン用、×ボタン用）
         let dividePressTimer = null;
-        let backspacePressTimer = null;
+        let multiplyPressTimer = null;
         let isDivideLongPressActioned = false;
-        let isBackspaceLongPressActioned = false;
+        let isMultiplyLongPressActioned = false;
 
         // iOS用のダブルタップズーム防止
         document.addEventListener('touchstart', function (event) {
@@ -364,7 +367,7 @@
             if (navigator.vibrate) navigator.vibrate(50);
         }
 
-        // ① 閾値 N 設定モードの切り替え処理（一字消去⌫ボタン長押し）
+        // ① 閾値 N 設定モードの切り替え処理（×ボタン長押し）
         function toggleNMode() {
             if (isMagicMode) return; // マジシャンモード中は切り替えない
 
@@ -493,9 +496,8 @@
                     currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
                 }
             } else if (key === '%') {
-                // ② 演算子直後に % を押した場合の修正
+                // 演算子直後に % を押した場合の修正
                 if (isResetOnNextKey && formulaHistory.length >= 2) {
-                    // 演算子を取り消して前の数値を取り出す
                     formulaHistory.pop(); // 演算子を除去
                     let targetVal = formulaHistory.pop(); // 前の数値を取り出す
                     currentInput = String(parseFloat(targetVal) / 100);
@@ -523,7 +525,7 @@
 
                     let realResult = calculateSafe(fullExpressionStr);
 
-                    // ① 設定した閾値 thresholdN より大きい場合に指定数値へ書き換え
+                    // 設定した閾値 thresholdN より大きい場合に指定数値へ書き換え
                     if (magicNumber !== null && (realResult === "Error" || realResult > thresholdN)) {
                         currentInput = magicNumber;
                     } else {
@@ -591,36 +593,36 @@
                         handleKey('÷');
                     }
                 });
-            } else if (key === 'backspace') {
-                // ① ⌫ ボタンの長押し（閾値 N 設定モード切り替え）
+            } else if (key === '×') {
+                // ① × ボタンの長押し（閾値 N 設定モード切り替え）
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    isBackspaceLongPressActioned = false;
-                    backspacePressTimer = setTimeout(() => {
+                    isMultiplyLongPressActioned = false;
+                    multiplyPressTimer = setTimeout(() => {
                         toggleNMode();
-                        isBackspaceLongPressActioned = true;
+                        isMultiplyLongPressActioned = true;
                     }, 2000);
                 }, { passive: false });
 
                 button.addEventListener('touchend', (e) => {
                     e.preventDefault();
-                    clearTimeout(backspacePressTimer);
-                    if (!isBackspaceLongPressActioned) {
-                        handleKey('backspace');
+                    clearTimeout(multiplyPressTimer);
+                    if (!isMultiplyLongPressActioned) {
+                        handleKey('×');
                     }
                 });
 
                 button.addEventListener('mousedown', (e) => {
-                    isBackspaceLongPressActioned = false;
-                    backspacePressTimer = setTimeout(() => {
+                    isMultiplyLongPressActioned = false;
+                    multiplyPressTimer = setTimeout(() => {
                         toggleNMode();
-                        isBackspaceLongPressActioned = true;
+                        isMultiplyLongPressActioned = true;
                     }, 2000);
                 });
                 button.addEventListener('mouseup', (e) => {
-                    clearTimeout(backspacePressTimer);
-                    if (!isBackspaceLongPressActioned) {
-                        handleKey('backspace');
+                    clearTimeout(multiplyPressTimer);
+                    if (!isMultiplyLongPressActioned) {
+                        handleKey('×');
                     }
                 });
             } else {
