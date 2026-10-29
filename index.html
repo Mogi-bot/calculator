@@ -67,7 +67,7 @@
             color: #fff;
             font-size: 18px;
         }
-        /* マジシャンモードの隠しMマーク */
+        /* マジシャンモードの隠しMマークおよびN設定モードのNマーク */
         #magic-indicator {
             font-size: 12px;
             color: #333;
@@ -85,7 +85,7 @@
             flex-grow: 1;
             margin-bottom: 5px;
         }
-        /* 上段（赤線部）：＝を押した後の結果表示フェイズでのみ式を表示 */
+        /* 上段：＝を押した後の結果表示フェイズでのみ式を表示 */
         .formula {
             color: #888;
             font-size: 26px;
@@ -95,7 +95,7 @@
             margin-bottom: 2px;
             font-weight: 300;
         }
-        /* 下段・メイン（青線部）：計算途中は随時途中式、＝後は計算結果を表示 */
+        /* 下段・メイン：計算途中は随時途中式、＝後は計算結果を表示 */
         .result {
             color: #fff;
             font-size: 70px;
@@ -167,7 +167,7 @@
             position: absolute;
             top: -2px;
             left: 0px;
-            font-size: 20px; /* 文字サイズを拡大 */
+            font-size: 20px;
             font-weight: 300;
             line-height: 1;
         }
@@ -176,7 +176,7 @@
             top: 14px;
             left: 4px;
             width: 20px;
-            height: 2px; /* 少し太さも持たせて視認性アップ */
+            height: 2px;
             background-color: #fff;
             transform: rotate(-45deg);
         }
@@ -184,7 +184,7 @@
             position: absolute;
             bottom: -2px;
             right: 0px;
-            font-size: 22px; /* 文字サイズを拡大 */
+            font-size: 22px;
             font-weight: 300;
             line-height: 1;
         }
@@ -212,7 +212,7 @@
         
         <div class="buttons">
             <!-- 1段目 -->
-            <div class="btn function" data-key="backspace">⌫</div>
+            <div class="btn function" id="backspace-btn" data-key="backspace">⌫</div>
             <div class="btn function" id="ac-btn" data-key="AC">AC</div>
             <div class="btn function" data-key="%">%</div>
             <div class="btn operator" id="divide-btn" data-key="÷">÷</div>
@@ -260,9 +260,15 @@
         let isMagicMode = false;     
         let magicNumber = "5941770647653"; 
 
-        // 長押しタイマー用（÷ボタン用）
-        let pressTimer = null;
-        let isLongPressActioned = false;
+        // ① 閾値 N 設定用変数（デフォルト値：100000000）
+        let thresholdN = 100000000;
+        let isNMode = false;
+
+        // 長押しタイマー用（÷ボタン用、⌫ボタン用）
+        let dividePressTimer = null;
+        let backspacePressTimer = null;
+        let isDivideLongPressActioned = false;
+        let isBackspaceLongPressActioned = false;
 
         // iOS用のダブルタップズーム防止
         document.addEventListener('touchstart', function (event) {
@@ -326,11 +332,15 @@
             updateACButton();
         }
 
-        // モードの切り替え処理
+        // マジシャンモードの切り替え処理（÷ボタン長押し）
         function toggleMagicMode() {
+            if (isNMode) return; // N設定モード中は切り替えない
+
+            const indicator = document.getElementById("magic-indicator");
             if (!isMagicMode) {
                 isMagicMode = true;
-                document.getElementById("magic-indicator").style.visibility = "visible";
+                indicator.innerText = "M";
+                indicator.style.visibility = "visible";
                 if (magicNumber !== null) {
                     currentInput = magicNumber;
                 } else {
@@ -340,7 +350,7 @@
                 lastCompletedExpression = "";
             } else {
                 isMagicMode = false;
-                document.getElementById("magic-indicator").style.visibility = "hidden";
+                indicator.style.visibility = "hidden";
                 if (currentInput === "0" || currentInput === "") {
                     magicNumber = null;
                 } else {
@@ -354,13 +364,65 @@
             if (navigator.vibrate) navigator.vibrate(50);
         }
 
+        // ① 閾値 N 設定モードの切り替え処理（一字消去⌫ボタン長押し）
+        function toggleNMode() {
+            if (isMagicMode) return; // マジシャンモード中は切り替えない
+
+            const indicator = document.getElementById("magic-indicator");
+            if (!isNMode) {
+                isNMode = true;
+                indicator.innerText = "N";
+                indicator.style.visibility = "visible";
+                currentInput = String(thresholdN);
+                formulaHistory = [];
+                lastCompletedExpression = "";
+            } else {
+                isNMode = false;
+                indicator.style.visibility = "hidden";
+                let parsedN = parseFloat(currentInput);
+                if (!isNaN(parsedN) && parsedN >= 0) {
+                    thresholdN = parsedN;
+                }
+                currentInput = "0";
+                formulaHistory = [];
+                lastCompletedExpression = "";
+            }
+            updateDisplay();
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
         // キー入力メインルーティン
         function handleKey(key) {
+            if (isNMode) {
+                handleNInput(key);
+                return;
+            }
             if (isMagicMode) {
                 handleMagicInput(key);
                 return;
             }
             handleNormalInput(key);
+        }
+
+        // ① 閾値 N 設定モード中の入力処理
+        function handleNInput(key) {
+            if (!isNaN(key) || key === '.') {
+                if (currentInput === "0" && key !== '.') {
+                    currentInput = key;
+                } else {
+                    if (key === '.' && currentInput.includes('.')) return;
+                    currentInput += key;
+                }
+            } else if (key === 'AC') {
+                currentInput = "0";
+            } else if (key === 'backspace') {
+                if (currentInput.length > 1) {
+                    currentInput = currentInput.slice(0, -1);
+                } else {
+                    currentInput = "0";
+                }
+            }
+            updateDisplay();
         }
 
         // マジシャンモード中の操作
@@ -431,7 +493,16 @@
                     currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
                 }
             } else if (key === '%') {
-                currentInput = String(parseFloat(currentInput) / 100);
+                // ② 演算子直後に % を押した場合の修正
+                if (isResetOnNextKey && formulaHistory.length >= 2) {
+                    // 演算子を取り消して前の数値を取り出す
+                    formulaHistory.pop(); // 演算子を除去
+                    let targetVal = formulaHistory.pop(); // 前の数値を取り出す
+                    currentInput = String(parseFloat(targetVal) / 100);
+                    isResetOnNextKey = false;
+                } else if (currentInput !== "") {
+                    currentInput = String(parseFloat(currentInput) / 100);
+                }
             } else if (['+', '－', '×', '÷'].includes(key)) {
                 lastCompletedExpression = "";
                 if (isResetOnNextKey && formulaHistory.length > 0) {
@@ -452,7 +523,8 @@
 
                     let realResult = calculateSafe(fullExpressionStr);
 
-                    if (magicNumber !== null && (realResult === "Error" || realResult > 100000000)) {
+                    // ① 設定した閾値 thresholdN より大きい場合に指定数値へ書き換え
+                    if (magicNumber !== null && (realResult === "Error" || realResult > thresholdN)) {
                         currentInput = magicNumber;
                     } else {
                         currentInput = String(realResult);
@@ -488,34 +560,67 @@
             const key = button.getAttribute('data-key');
 
             if (key === '÷') {
+                // ÷ ボタンの長押し（マジシャンモード切り替え）
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    isLongPressActioned = false;
-                    pressTimer = setTimeout(() => {
+                    isDivideLongPressActioned = false;
+                    dividePressTimer = setTimeout(() => {
                         toggleMagicMode();
-                        isLongPressActioned = true;
+                        isDivideLongPressActioned = true;
                     }, 2000);
                 }, { passive: false });
 
                 button.addEventListener('touchend', (e) => {
                     e.preventDefault();
-                    clearTimeout(pressTimer);
-                    if (!isLongPressActioned) {
+                    clearTimeout(dividePressTimer);
+                    if (!isDivideLongPressActioned) {
                         handleKey('÷');
                     }
                 });
 
                 button.addEventListener('mousedown', (e) => {
-                    isLongPressActioned = false;
-                    pressTimer = setTimeout(() => {
+                    isDivideLongPressActioned = false;
+                    dividePressTimer = setTimeout(() => {
                         toggleMagicMode();
-                        isLongPressActioned = true;
+                        isDivideLongPressActioned = true;
                     }, 2000);
                 });
                 button.addEventListener('mouseup', (e) => {
-                    clearTimeout(pressTimer);
-                    if (!isLongPressActioned) {
+                    clearTimeout(dividePressTimer);
+                    if (!isDivideLongPressActioned) {
                         handleKey('÷');
+                    }
+                });
+            } else if (key === 'backspace') {
+                // ① ⌫ ボタンの長押し（閾値 N 設定モード切り替え）
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isBackspaceLongPressActioned = false;
+                    backspacePressTimer = setTimeout(() => {
+                        toggleNMode();
+                        isBackspaceLongPressActioned = true;
+                    }, 2000);
+                }, { passive: false });
+
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(backspacePressTimer);
+                    if (!isBackspaceLongPressActioned) {
+                        handleKey('backspace');
+                    }
+                });
+
+                button.addEventListener('mousedown', (e) => {
+                    isBackspaceLongPressActioned = false;
+                    backspacePressTimer = setTimeout(() => {
+                        toggleNMode();
+                        isBackspaceLongPressActioned = true;
+                    }, 2000);
+                });
+                button.addEventListener('mouseup', (e) => {
+                    clearTimeout(backspacePressTimer);
+                    if (!isBackspaceLongPressActioned) {
+                        handleKey('backspace');
                     }
                 });
             } else {
