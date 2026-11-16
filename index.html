@@ -194,29 +194,35 @@
 <body>
 
     <div class="header">
-        <!-- 左上ボタン（時計アイコン：9時表示） -->
+        <!-- 左上ボタン（時計アイコン：短針短め・長針長めの9時表示） -->
         <div class="header-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="6 12 12 12 12 6"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="10"/>
+                <!-- 短針（9時方向を短く） -->
+                <line x1="12" y1="12" x2="8" y2="12" stroke-linecap="round"/>
+                <!-- 長針（12時方向を長く） -->
+                <line x1="12" y1="12" x2="12" y2="4.5" stroke-linecap="round"/>
+            </svg>
         </div>
         <div id="magic-indicator">M</div>
         
-        <!-- 右上ボタン（電卓アイコン：大きめの丸とディスプレイ） -->
+        <!-- 右上ボタン（電卓アイコン：縦長＆大きめのディスプレイ・ボタン） -->
         <div class="header-btn">
             <svg width="20" height="20" viewBox="0 0 24 24">
-                <!-- 白色のベース外枠 -->
-                <rect x="4.5" y="1.5" width="15" height="21" rx="3.5" fill="#ffffff"/>
-                <!-- ディスプレイ（少し太くした長方形） -->
-                <rect x="7.5" y="4" width="9" height="3.5" rx="0.5" fill="#1c1c1e"/>
-                <!-- 3×3 の黒色円ボタン（r="1.2" に拡大） -->
-                <circle cx="8" cy="10.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="12" cy="10.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="16" cy="10.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="8" cy="14.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="12" cy="14.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="16" cy="14.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="8" cy="18.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="12" cy="18.5" r="1.2" fill="#1c1c1e"/>
-                <circle cx="16" cy="18.5" r="1.2" fill="#1c1c1e"/>
+                <!-- 白色のベース外枠（さらに縦長に拡張） -->
+                <rect x="4.5" y="0.5" width="15" height="23" rx="3.5" fill="#ffffff"/>
+                <!-- ディスプレイ（縦幅をさらに長く） -->
+                <rect x="7.0" y="3.0" width="10" height="4.2" rx="0.8" fill="#1c1c1e"/>
+                <!-- 3×3 の黒色円ボタン（径を大きく：r="1.4"） -->
+                <circle cx="8" cy="10.2" r="1.4" fill="#1c1c1e"/>
+                <circle cx="12" cy="10.2" r="1.4" fill="#1c1c1e"/>
+                <circle cx="16" cy="10.2" r="1.4" fill="#1c1c1e"/>
+                <circle cx="8" cy="14.3" r="1.4" fill="#1c1c1e"/>
+                <circle cx="12" cy="14.3" r="1.4" fill="#1c1c1e"/>
+                <circle cx="16" cy="14.3" r="1.4" fill="#1c1c1e"/>
+                <circle cx="8" cy="18.4" r="1.4" fill="#1c1c1e"/>
+                <circle cx="12" cy="18.4" r="1.4" fill="#1c1c1e"/>
+                <circle cx="16" cy="18.4" r="1.4" fill="#1c1c1e"/>
             </svg>
         </div>
     </div>
