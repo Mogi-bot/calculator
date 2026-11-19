@@ -506,15 +506,35 @@
                 lastCompletedExpression = "";
                 isResetOnNextKey = false;
             } else if (key === 'backspace') {
-                if (!isResetOnNextKey && currentInput.length > 0) {
+                if (lastCompletedExpression !== "") {
+                    lastCompletedExpression = "";
+                }
+
+                // 演算子直後（例: "564×"）で押された場合、演算子を削除して前の数値（"564"）に戻す
+                if ((currentInput === "" || isResetOnNextKey) && formulaHistory.length >= 2) {
+                    formulaHistory.pop(); // 末尾の演算子を削除
+                    currentInput = formulaHistory.pop(); // 直前の数値を復元
+                    isResetOnNextKey = false;
+                } else if (!isResetOnNextKey && currentInput.length > 0) {
                     if (currentInput.length > 1) {
                         currentInput = currentInput.slice(0, -1);
+                        // マイナス記号だけ残った場合は空文字にする（後ろに演算子がある場合は "564×" にするため）
+                        if (currentInput === "-") {
+                            currentInput = formulaHistory.length > 0 ? "" : "0";
+                            if (formulaHistory.length > 0) isResetOnNextKey = true;
+                        }
                     } else {
-                        currentInput = "0";
+                        // 後ろに演算子がある場合（例: "564×6" → "564×"）は空文字にして演算子末尾にする
+                        if (formulaHistory.length > 0) {
+                            currentInput = "";
+                            isResetOnNextKey = true;
+                        } else {
+                            currentInput = "0";
+                        }
                     }
                 }
             } else if (key === '+/-') {
-                if (currentInput !== "0") {
+                if (currentInput !== "0" && currentInput !== "") {
                     currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
                 }
             } else if (key === '%') {
